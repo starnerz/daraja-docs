@@ -1,0 +1,84 @@
+---
+title: Going live
+description: What Safaricom requires before real money moves.
+---
+
+Going live is mostly a business process. The code change is one environment
+variable; everything else is paperwork and portal access.
+
+## The code part
+
+```dotenv
+DARAJA_MODE=live
+DARAJA_CONSUMER_KEY=your-production-key
+DARAJA_CONSUMER_SECRET=your-production-secret
+DARAJA_CERTIFICATE_PATH=/path/to/production.cer
+```
+
+Production credentials are different from sandbox and arrive by email after
+go-live is approved.
+
+## The process
+
+1. **Test in sandbox** until the flows work end to end.
+2. **Apply for a short code** if you do not have one — email
+   `M-PESABusiness@Safaricom.co.ke`. B2C needs a Bulk Disbursement account, or a
+   "one account" short code that can both receive and disburse.
+3. **Get portal access.** Settlement must be set to Bank via a Head Office
+   application before a Business Administrator can be created for you.
+4. **Create an API operator** on [org.ke.m-pesa.com](https://org.ke.m-pesa.com):
+   log in as Business Administrator → Operators → Add → access channel **API** →
+   assign the roles for the APIs you use.
+5. **Set the operator's password** as a user holding the *Set Restricted ORG API
+   PASSWORD* role.
+6. **Submit Go Live** on the Daraja portal with your short code, organisation
+   name and M-Pesa operator username. The OTP goes to the phone number on that
+   operator's profile, which must be a Safaricom line.
+
+Commercial APIs — M-Pesa Ratiba and B2B Express Checkout — additionally need a
+signed agreement.
+
+## Pre-flight checklist
+
+- [ ] `DARAJA_MODE=live` and production credentials in place
+- [ ] Current **production** certificate downloaded and configured
+- [ ] Callback URLs are **HTTPS** and publicly reachable
+- [ ] Callback URLs contain none of `M-PESA`, `Safaricom`, `mpesa`, `exe`, `exec`, `cmd`, `sql`, `query`
+- [ ] No ngrok or similar tunnel in the URLs
+- [ ] C2B URLs registered in production (one-time)
+- [ ] API operator has the right role per API, and is **active**
+- [ ] Callback listeners are queued
+- [ ] Payment verification does not trust the callback alone
+- [ ] Logging enabled with a retention policy you are comfortable with
+
+## Differences that bite
+
+**C2B registration is one-time.** To change URLs later, delete them under
+Self Services → URL Management, then re-register.
+
+**Simulation is gone.** `simulatePayBill()` and `simulateBuyGoods()` are
+sandbox-only; the package throws if `mode` is `live`.
+
+**Balances split across accounts.** B2C debits Utility, not Working/MMF. Move
+funds with [`accountTopUp()`](../../apis/b2b/#b2c-account-top-up).
+
+**Rate limits are real.** Spike arrest (`500.003.02`) and quota violations
+(`500.003.03`) come from sending too fast. Queue and throttle outbound calls.
+
+## Verify money moved
+
+A callback is not proof — it is unauthenticated input. For anything of value,
+confirm independently:
+
+```php
+Daraja::transaction()->query($callback->receipt());
+```
+
+Then release goods or funds on the result.
+
+## Support
+
+- Daraja chatbot on the portal
+- Incident Management under Self Services
+- `apisupport@safaricom.co.ke` for technical issues
+- `M-PESABusiness@Safaricom.co.ke` for short codes and accounts

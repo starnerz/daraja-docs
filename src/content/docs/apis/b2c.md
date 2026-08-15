@@ -1,0 +1,104 @@
+---
+title: Business to Customer
+description: Pay money out to customers and Pochi la Biashara wallets.
+---
+
+B2C sends money from your short code to a customer — salaries, refunds,
+winnings, loan disbursements.
+
+<div class="endpoint"><span class="verb">POST</span> mpesa/b2c/v3/paymentrequest</div>
+
+## Make a payout
+
+```php
+Daraja::b2c()->business('0712345678', 2500, 'Refund for order 41');
+Daraja::b2c()->salary('0712345678', 45000, 'March salary');
+Daraja::b2c()->promotion('0712345678', 1000, 'Competition winner');
+```
+
+Each maps to a `CommandID`: `BusinessPayment`, `SalaryPayment` and
+`PromotionPayment`.
+
+:::note[Duplicate protection]
+v3 requires a unique `OriginatorConversationID` per request, which the package
+generates as a UUID. To make retries idempotent, supply your own:
+
+```php
+Daraja::b2c()->business('0712345678', 2500,
+    originatorConversationId: "payout-{$payout->id}",
+);
+```
+
+Reusing an ID returns `500.002.1001 Duplicate OriginatorConversationID` — which
+is the protection working.
+:::
+
+## Limits
+
+| | |
+|---|---|
+| Minimum | KES 10 |
+| Maximum per transaction | KES 250,000 |
+| Maximum customer balance | KES 500,000 |
+| Maximum daily value | KES 500,000 |
+
+## Pochi la Biashara
+
+Pays a customer's business wallet rather than their personal one. Same payload,
+different endpoint.
+
+<div class="endpoint"><span class="verb">POST</span> mpesa/b2pochi/v1/paymentrequest</div>
+
+```php
+Daraja::b2c()->pochi('0712345678', 3000, 'Supplier payment');
+```
+
+The recipient must actually have a Pochi la Biashara wallet.
+
+## The result
+
+```php
+use Starnerz\LaravelDaraja\Events\ResultReceived;
+
+public function handle(ResultReceived $event): void
+{
+    if ($event->type !== 'b2c') {
+        return;
+    }
+
+    $result = $event->result;
+
+    if ($result->successful()) {
+        Payout::markSent(
+            $result->originatorConversationId,
+            $result->receipt(),
+            $result->receiverName(),   // "254705912645 - NICHOLAS JOHN SONGOK"
+        );
+    }
+}
+```
+
+| Result code | Meaning |
+|---|---|
+| `0` | Paid |
+| `1` | Insufficient balance in the **Utility** account |
+| `2` / `3` | Below minimum / above maximum |
+| `4` | Would exceed the daily transfer limit |
+| `8` | Would exceed the recipient's maximum balance |
+| `11` | B2C account not active |
+| `21` | Initiator lacks the ORG B2C API initiator role |
+| `2001` | Invalid initiator information |
+| `2040` | Recipient is not a registered M-Pesa customer |
+| `8006` | Security credential is locked |
+
+:::caution[Balance lives in two places]
+B2C debits the **Utility** account, not Working/MMF. "Insufficient balance" with
+money visibly in the account almost always means funds are in the wrong one.
+Move them with [`accountTopUp()`](../b2b/#b2c-account-top-up) or on the M-Pesa
+portal.
+:::
+
+:::danger[B2C cannot be reversed via API]
+Safaricom does not support reversing B2C or Pochi payouts through the Reversal
+API. They have to be reversed manually on the M-Pesa organisation portal.
+:::

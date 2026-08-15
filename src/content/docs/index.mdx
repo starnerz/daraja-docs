@@ -1,0 +1,80 @@
+---
+title: Laravel Daraja
+description: A Laravel package for the Safaricom M-Pesa Daraja APIs.
+template: splash
+hero:
+  tagline: Every Safaricom M-Pesa API, as ordinary Laravel code. Typed responses, cached tokens, callbacks you can actually test.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: getting-started/introduction/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/starnerz/laravel-daraja
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, Code } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+    <Card title="Prompt a customer to pay" icon="rocket">
+        One call sends an STK push and returns a typed response.
+
+        <Code
+            lang="php"
+            code={`$response = Daraja::stk()->push(
+    phone: '0712345678',
+    amount: 1500,
+    accountReference: 'INV-001',
+);
+
+$response->checkoutRequestId; // ws_CO_1912…`}
+        />
+    </Card>
+
+    <Card title="Handle the result" icon="approve-check">
+        Callbacks arrive as typed events, not raw JSON.
+
+        <Code
+            lang="php"
+            code={`Event::listen(function (StkCallbackReceived $e) {
+    if ($e->callback->successful()) {
+        Order::markPaid($e->callback->receipt());
+    }
+});`}
+        />
+    </Card>
+
+    <Card title="Test without a network" icon="setting">
+        Built on Laravel's HTTP client, so `Http::fake()` drives the whole package.
+
+        <Code
+            lang="php"
+            code={`Http::fake([
+    '*/mpesa/stkpush/*' => Http::response([
+        'ResponseCode' => '0',
+    ]),
+]);`}
+        />
+    </Card>
+
+    <Card title="Seventeen APIs" icon="list-format">
+        STK Push, C2B, B2C, B2B, Pochi, QR, Ratiba, Bill Manager, Pull
+        Transactions, Lipa na Bonga, balances, reversals and status queries.
+
+        [See the full list](apis/overview/)
+    </Card>
+</CardGrid>
+
+## Requirements
+
+| | |
+|---|---|
+| PHP | 8.3 or higher |
+| Laravel | 12 or 13 |
+
+Laravel 10 and 11 are not supported. Both are past end of life and carry
+unpatched advisories, so Composer refuses to install them without disabling its
+security audit. Applications on those versions should stay on `v1.x`.
