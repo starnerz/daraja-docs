@@ -27,24 +27,20 @@ encryption. It also means you cannot compare or cache the encrypted form.
 
 ## Certificates
 
-There is a **different certificate per environment**. Download both from the
-[developer portal](https://developer.safaricom.co.ke):
+There is a **different certificate per environment**. Both ship with the package
+and the right one is selected from `DARAJA_MODE`, so there is nothing to
+download or install.
 
-```
-certs/sandbox.cer
-certs/production.cer
-```
-
-Or keep them in your application:
+To point at your own copy:
 
 ```dotenv
 DARAJA_CERTIFICATE_PATH=/full/path/to/production.cer
 ```
 
-:::caution
-The `production.cer` that shipped with v1 expired in **March 2018**. RSA
+:::note
+The certificate bundled with 4.x and earlier expired in **March 2018**. RSA
 encryption still succeeds with an expired certificate because only the public
-key is used, but download a current one before going live.
+key is used, which is why it went unnoticed — v5 ships a current one.
 :::
 
 ## Generating one by hand
@@ -98,11 +94,9 @@ rejected. `@` is treated as an ordinary character, not a special one.
 
 ## Errors the package raises
 
-A missing or unparseable certificate raises a `ConfigurationException` naming
-the path and pointing at the portal, rather than a PHP warning:
+If you set `DARAJA_CERTIFICATE_PATH` and the file is missing or unparseable, you
+get a `ConfigurationException` naming the path rather than a PHP warning:
 
 ```
 The Safaricom public certificate could not be read at [/path/production.cer].
-Download the current certificate from https://developer.safaricom.co.ke and
-point [laravel-daraja.certificate_path] at it.
 ```

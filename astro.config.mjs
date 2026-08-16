@@ -71,7 +71,7 @@ export default defineConfig({
                 },
                 {
                     label: 'Upgrading',
-                    items: [{ label: 'v1 to v2', slug: 'upgrade/v1-to-v2' }],
+                    items: [{ label: '4.x to 5.0', slug: 'upgrade/v4-to-v5' }],
                 },
             ],
         }),

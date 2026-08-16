@@ -1,21 +1,27 @@
 ---
-title: Upgrading from v1 to v2
+title: Upgrading from 4.x to 5.0
 description: What changed, and how to migrate.
 ---
 
-v2 is a rewrite. The facade, the class names and the configuration keys have all
+v5 is a rewrite. The facade, the class names and the configuration keys have all
 changed.
 
-:::caution[Staying on v1]
-v1 requires Laravel 8 and is not maintained. If you cannot move to Laravel
-12/13 and PHP 8.3, stay on `^1.0` — but be aware v1's STK push has a signature
-bug that makes the documented example throw, and it calls `str_limit()`, removed
-in Laravel 6.
+:::note[Which version am I on?]
+Versions 2.0.0, 3.0.0 and 4.0.0 were all released on the same day in 2020 and
+share the 1.x codebase, each tracking a Laravel major. Whichever of those you
+are on, this guide applies.
+:::
+
+:::caution[Staying on 4.x]
+4.x requires Laravel 8 and is no longer maintained. If you cannot move to
+Laravel 12/13 and PHP 8.3, stay on `^4.0` — but be aware its STK push has a
+signature bug that makes the documented example throw, and it calls
+`str_limit()`, removed in Laravel 6.
 :::
 
 ## Requirements
 
-| | v1 | v2 |
+| | 4.x | 5.0 |
 |---|---|---|
 | PHP | 7.3+ | 8.3+ |
 | Laravel | 8 | 12 or 13 |
@@ -32,7 +38,7 @@ resolved through the facade rather than instantiated.
 
 ## Method mapping
 
-| v1 | v2 |
+| 4.x | 5.0 |
 |---|---|
 | `MpesaApi::STK()->push($phone, $amount, $desc, $ref)` | `Daraja::stk()->push($phone, $amount, $ref, $desc)` |
 | `MpesaApi::STK()->transactionStatus($id)` | `Daraja::stk()->query($id)` |
@@ -52,7 +58,7 @@ before the description, since the description is optional and defaults to it.
 
 Keys were reorganised. The file is still `config/laravel-daraja.php`.
 
-| v1 | v2 |
+| 4.x | 5.0 |
 |---|---|
 | `stk_push.short_code` | `stk.short_code` |
 | `stk_push.pass_key` | `stk.pass_key` |
@@ -73,7 +79,7 @@ php artisan vendor:publish --tag=laravel-daraja-config --force
 
 ## Responses
 
-v1 returned `stdClass` from `json_decode()`. v2 returns readonly objects:
+4.x returned `stdClass` from `json_decode()`. v5 returns readonly objects:
 
 ```diff
 - $response = MpesaApi::STK()->push(…);
@@ -101,28 +107,28 @@ failures `AuthenticationException`, both extending `DarajaException`.
 
 Several endpoints moved, which changes payloads Safaricom sends you:
 
-| API | v1 | v2 |
+| API | 4.x | 5.0 |
 |---|---|---|
 | C2B | `mpesa/c2b/v1/*` | `mpesa/c2b/v2/*` |
 | B2C | `mpesa/b2c/v1/paymentrequest` | `mpesa/b2c/v3/paymentrequest` |
 
-**C2B v2 masks the MSISDN** (`2547 ***** 126`) where v1 sent a SHA-256 hash. Any
-code matching customers on that value needs revisiting.
+**C2B v2 masks the MSISDN** (`2547 ***** 126`) where the older endpoint sent a
+SHA-256 hash. Any code matching customers on that value needs revisiting.
 
 **B2C v3 requires `OriginatorConversationID`.** The package generates one; pass
 your own to make retries idempotent.
 
 ## Certificates
 
-v1 bundled a single `cert.cer`, which expired in March 2018. v2 expects one per
-environment at `certs/sandbox.cer` and `certs/production.cer`, or a path in
-`DARAJA_CERTIFICATE_PATH`. Download current copies from the portal.
+4.x bundled a single certificate, which expired in March 2018. v5 ships one per
+environment and picks the right one from `mode`, so no action is needed. To use
+your own copy, set `DARAJA_CERTIFICATE_PATH`.
 
-## New in v2
+## New in v5
 
 - Cached OAuth tokens instead of a request per instantiation
 - Dynamic QR, M-Pesa Ratiba, Bill Manager, Pull Transactions, Lipa na Bonga,
   B2B Express Checkout, B2C Account Top Up, Business to Pochi
 - Opt-in callback routes with typed events
 - `Http::fake()`-driven testing
-- TLS verification in sandbox, which v1 disabled
+- TLS verification in sandbox, which 4.x disabled

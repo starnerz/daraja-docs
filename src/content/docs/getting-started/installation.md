@@ -66,21 +66,13 @@ consumer key and secret are valid for that environment. Anything else raises a
 
 The APIs that need a `SecurityCredential` — B2C, B2B, Reversal, Account Balance
 and Transaction Status — encrypt your initiator password with a Safaricom
-certificate. Download the sandbox and production certificates from the
-[developer portal](https://developer.safaricom.co.ke) and place them at:
+certificate.
 
-```
-vendor/starnerz/laravel-daraja/certs/sandbox.cer
-vendor/starnerz/laravel-daraja/certs/production.cer
-```
+**Nothing is required of you.** The package ships a certificate for each
+environment and picks the one matching `DARAJA_MODE`.
 
-Better, keep them in your own application and point the package at them:
+To use your own copy instead:
 
 ```dotenv
 DARAJA_CERTIFICATE_PATH=/full/path/to/production.cer
 ```
-
-:::caution
-The `production.cer` shipped with v1 of this package expired in March 2018.
-Download a current certificate before going live.
-:::

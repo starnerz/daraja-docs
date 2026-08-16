@@ -12,11 +12,11 @@ variable; everything else is paperwork and portal access.
 DARAJA_MODE=live
 DARAJA_CONSUMER_KEY=your-production-key
 DARAJA_CONSUMER_SECRET=your-production-secret
-DARAJA_CERTIFICATE_PATH=/path/to/production.cer
 ```
 
 Production credentials are different from sandbox and arrive by email after
-go-live is approved.
+go-live is approved. Switching `mode` also switches the certificate used for
+security credentials, so there is nothing else to change.
 
 ## The process
 
@@ -41,7 +41,7 @@ signed agreement.
 ## Pre-flight checklist
 
 - [ ] `DARAJA_MODE=live` and production credentials in place
-- [ ] Current **production** certificate downloaded and configured
+- [ ] `DARAJA_MODE=live`, so the production certificate is the one in use
 - [ ] Callback URLs are **HTTPS** and publicly reachable
 - [ ] Callback URLs contain none of `M-PESA`, `Safaricom`, `mpesa`, `exe`, `exec`, `cmd`, `sql`, `query`
 - [ ] No ngrok or similar tunnel in the URLs
