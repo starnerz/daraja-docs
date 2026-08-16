@@ -120,8 +120,8 @@ your own to make retries idempotent.
 
 ## Certificates
 
-4.x bundled a single certificate, which expired in March 2018. v5 ships one per
-environment and picks the right one from `mode`, so no action is needed. To use
+4.x bundled only the production certificate and used it for sandbox too. v5
+ships both and picks the right one from `mode`, so no action is needed. To use
 your own copy, set `DARAJA_CERTIFICATE_PATH`.
 
 ## New in v5
