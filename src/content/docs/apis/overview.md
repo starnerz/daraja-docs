@@ -56,11 +56,7 @@ request. Whether money moved is decided later, in the callback.
 
 ## Not supported
 
-**B2B Hakikisha** (organisation name and tariff lookup) is absent because
-Safaricom's own documentation page for it returns a 404, so there is no
-published endpoint or payload to implement against.
-
-**Tax Remittance**, **Mobile Data Bundles**, **IoT SIM Management** and the
+**B2B Hakikisha**, **Tax Remittance**, **Mobile Data Bundles**, **IoT SIM Management** and the
 identity APIs (Swap, IMSI, Mobile Number Validation, Age on Network) are out of
 scope for a payments package.
 
