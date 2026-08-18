@@ -37,16 +37,6 @@ To point at your own copy:
 DARAJA_CERTIFICATE_PATH=/full/path/to/production.cer
 ```
 
-:::note[The certificates show as expired, and that is fine]
-Safaricom's sandbox certificate expired in 2016 and the production one in 2018.
-These are still the files the portal distributes, and they still work: RSA
-encryption reads only the public key, so validity dates play no part. Safaricom
-decrypts credentials produced with them without complaint.
-
-Replacing them with a self-signed certificate to clear the dates would break
-everything — only Safaricom holds the matching private key.
-:::
-
 ## Generating one by hand
 
 To check a credential against the portal's own tool:
