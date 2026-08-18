@@ -106,6 +106,12 @@ class RecordPayment
 `CallbackMetadata` is absent entirely when the payment fails, so `amount()` and
 `receipt()` return empty values rather than throwing.
 
+On success it is a list of `{Name, Value}` items — but not every item has a
+`Value`. Sandbox returns `{"Name": "Balance"}` with the key omitted altogether,
+so code doing `$item['Value']` on each entry raises an undefined-key error. The
+package reads them through `ResultParameters`, which returns `null` for a
+missing value and leaves the surrounding items intact.
+
 | Result code | Meaning |
 |---|---|
 | `0` | Paid |
