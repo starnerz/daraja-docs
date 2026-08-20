@@ -1,7 +1,32 @@
 ---
 title: Going live
 description: What Safaricom requires before real money moves.
+faq:
+    - question: How do I get M-Pesa production credentials?
+      answer: >-
+        Apply for a short code, get M-Pesa portal access with settlement set to
+        Bank, create an API operator with the roles for the APIs you use, set
+        that operator's password, then submit Go Live on the Daraja portal with
+        your short code, organisation name and operator username. Production
+        consumer key and secret arrive by email once go-live is approved.
+    - question: What does switching DARAJA_MODE to live change?
+      answer: >-
+        It switches the API host and the certificate used to encrypt security
+        credentials, and it disables the sandbox-only C2B simulation methods.
+        Production consumer key and secret still have to be set separately.
+    - question: Why does B2C report insufficient balance when the account has money?
+      answer: >-
+        B2C debits the Utility account rather than Working or MMF. Move funds
+        between accounts with accountTopUp() or on the M-Pesa organisation
+        portal.
+    - question: Can a callback URL contain the word mpesa?
+      answer: >-
+        No. Safaricom rejects callback URLs containing M-PESA, Safaricom,
+        mpesa, exe, exec, cmd, sql or query, and rejects tunnels such as ngrok
+        in production. The URL must be HTTPS and publicly reachable.
 ---
+
+import HireMe from '../../../components/HireMe.astro';
 
 Going live is mostly a business process. The code change is one environment
 variable; everything else is paperwork and portal access.
@@ -75,6 +100,11 @@ Daraja::transaction()->query($callback->receipt());
 ```
 
 Then release goods or funds on the result.
+
+<HireMe
+    subject="M-Pesa go-live help"
+    note="Go-live is mostly paperwork, and the paperwork is where it stalls: operator roles, settlement set to Bank, and callbacks that survive Safaricom retrying them."
+/>
 
 ## Support
 

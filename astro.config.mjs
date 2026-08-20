@@ -1,17 +1,116 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightLlmsTxt from 'starlight-llms-txt';
 
-// Project site on GitHub Pages, so every URL is prefixed with the repo name.
+/*
+ * ---------------------------------------------------------------------------
+ * Domain switch
+ *
+ * The docs are a GitHub Pages *project* site today, so every URL carries the
+ * repo name. When the custom domain lands: set SITE to it, set BASE to
+ * undefined, and add `public/CNAME`. Nothing else in the site hard-codes a
+ * URL — canonicals, sitemap, robots.txt, OG images and JSON-LD all derive from
+ * these two lines. See DOMAIN-SWITCH.md for the full checklist.
+ * ---------------------------------------------------------------------------
+ */
+const SITE = 'https://starnerz.github.io';
+/** @type {string | undefined} */
+const BASE = '/daraja-docs';
+
+/*
+ * Analytics and search-engine verification come from the environment, so
+ * turning them on later is a repository-variable change rather than a code
+ * change. The deploy workflow passes them through; unset means no tag.
+ */
+const { PLAUSIBLE_DOMAIN, GA4_MEASUREMENT_ID, GOOGLE_SITE_VERIFICATION, BING_SITE_VERIFICATION } =
+    process.env;
+
+/** @type {NonNullable<Parameters<typeof starlight>[0]['head']>} */
+const head = [];
+
+if (GOOGLE_SITE_VERIFICATION) {
+    head.push({
+        tag: 'meta',
+        attrs: { name: 'google-site-verification', content: GOOGLE_SITE_VERIFICATION },
+    });
+}
+
+if (BING_SITE_VERIFICATION) {
+    head.push({ tag: 'meta', attrs: { name: 'msvalidate.01', content: BING_SITE_VERIFICATION } });
+}
+
+// Plausible is cookieless, which keeps the site clear of consent banners.
+if (PLAUSIBLE_DOMAIN) {
+    head.push({
+        tag: 'script',
+        attrs: {
+            defer: true,
+            'data-domain': PLAUSIBLE_DOMAIN,
+            src: 'https://plausible.io/js/script.js',
+        },
+    });
+}
+
+// GA4 sets cookies. Only worth it if Google Ads conversion import is wanted,
+// and the privacy policy needs updating when it goes on.
+if (GA4_MEASUREMENT_ID) {
+    head.push(
+        {
+            tag: 'script',
+            attrs: {
+                async: true,
+                src: `https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`,
+            },
+        },
+        {
+            tag: 'script',
+            content: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA4_MEASUREMENT_ID}');`,
+        },
+    );
+}
+
 export default defineConfig({
-    site: 'https://starnerz.github.io',
-    base: '/daraja-docs',
+    site: SITE,
+    base: BASE,
     integrations: [
         starlight({
             title: 'Laravel Daraja',
             description:
                 'A Laravel package for the Safaricom M-Pesa Daraja APIs — STK Push, C2B, B2C, QR, Ratiba, Bill Manager and more.',
             logo: { src: './src/assets/logo.svg', replacesTitle: false },
+            head,
+            // Search titles, OpenGraph images and JSON-LD.
+            routeMiddleware: './src/routeData.ts',
+            plugins: [
+                starlightLlmsTxt({
+                    projectName: 'starnerz/laravel-daraja',
+                    description:
+                        'A Laravel package wrapping every Safaricom M-Pesa Daraja API — STK Push (M-Pesa Express), C2B, B2C, B2B, Dynamic QR, M-Pesa Ratiba, Bill Manager, Pull Transactions and Lipa na Bonga — with typed responses, cached OAuth tokens, and callbacks that can be tested with Http::fake().',
+                    details: [
+                        'Install with `composer require starnerz/laravel-daraja`. Requires PHP 8.3+ and Laravel 12 or 13.',
+                        'Everything is reached through the `Daraja` facade, e.g. `Daraja::stk()->push(...)`.',
+                        'Callbacks arrive as typed Laravel events rather than raw JSON payloads.',
+                    ].join('\n\n'),
+                    optionalLinks: [
+                        {
+                            label: 'Packagist',
+                            url: 'https://packagist.org/packages/starnerz/laravel-daraja',
+                            description: 'Released versions and the install command.',
+                        },
+                        {
+                            label: 'Source',
+                            url: 'https://github.com/starnerz/laravel-daraja',
+                            description: 'The package itself, including its test suite.',
+                        },
+                        {
+                            label: 'Safaricom Daraja portal',
+                            url: 'https://developer.safaricom.co.ke',
+                            description: 'Safaricom API documentation and credentials.',
+                        },
+                    ],
+                }),
+            ],
             social: [
                 {
                     icon: 'github',
@@ -72,6 +171,13 @@ export default defineConfig({
                 {
                     label: 'Upgrading',
                     items: [{ label: '4.x to 5.0', slug: 'upgrade/v4-to-v5' }],
+                },
+                {
+                    label: 'Project',
+                    items: [
+                        { label: 'Changelog', slug: 'changelog' },
+                        { label: 'Privacy', slug: 'legal/privacy' },
+                    ],
                 },
             ],
         }),

@@ -3,6 +3,8 @@ title: Business to Customer
 description: Pay money out to customers and Pochi la Biashara wallets.
 ---
 
+import HireMe from '../../../components/HireMe.astro';
+
 B2C sends money from your short code to a customer — salaries, refunds,
 winnings, loan disbursements.
 
@@ -102,3 +104,8 @@ portal.
 Safaricom does not support reversing B2C or Pochi payouts through the Reversal
 API. They have to be reversed manually on the M-Pesa organisation portal.
 :::
+
+<HireMe
+    subject="M-Pesa payouts (B2C)"
+    note="Payouts are the unforgiving half of M-Pesa: unique originator IDs, locked security credentials, split account balances, and no API reversal when one goes to the wrong number."
+/>

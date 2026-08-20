@@ -1,0 +1,62 @@
+---
+/**
+ * A quiet consulting panel for the pages read by people with a business
+ * behind them — going live, and payouts. Deliberately plain: it should read
+ * as an offer from the maintainer, not as an advertisement.
+ *
+ * The address is the same one published in the package's composer.json and
+ * SECURITY.md. Swap `CONTACT` for a dedicated address if you would rather
+ * keep integration enquiries out of your personal inbox.
+ */
+interface Props {
+    /** Overrides the body copy for the page it sits on. */
+    note?: string;
+    /** Prefills the email subject so enquiries arrive pre-labelled. */
+    subject?: string;
+}
+
+const CONTACT = 'stanleykimathi@gmail.com';
+
+const {
+    note = 'Sandbox is the easy half. Production credentials, callback reliability and reconciliation are where integrations stall.',
+    subject = 'M-Pesa integration enquiry',
+} = Astro.props;
+
+const href = `mailto:${CONTACT}?subject=${encodeURIComponent(subject)}`;
+---
+
+<aside class="hire-me" aria-label="Consulting">
+    <p class="hire-me__lead">Need this built rather than read?</p>
+    <p class="hire-me__note">{note}</p>
+    <p class="hire-me__note">
+        I maintain this package. If you would rather hand the integration over —
+        or have someone review one you already have — <a href={href}>get in touch</a>.
+    </p>
+</aside>
+
+<style>
+    .hire-me {
+        border: 1px solid var(--sl-color-gray-5);
+        border-inline-start: 3px solid var(--sl-color-accent);
+        border-radius: 0.25rem;
+        padding: 1rem 1.25rem;
+        margin: 2rem 0;
+        background: var(--sl-color-gray-6);
+    }
+
+    .hire-me__lead {
+        font-weight: 600;
+        color: var(--sl-color-white);
+        margin: 0 0 0.5rem;
+    }
+
+    .hire-me__note {
+        font-size: var(--sl-text-sm);
+        color: var(--sl-color-gray-2);
+        margin: 0 0 0.5rem;
+    }
+
+    .hire-me__note:last-child {
+        margin-bottom: 0;
+    }
+</style>

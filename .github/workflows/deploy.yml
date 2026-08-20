@@ -34,8 +34,15 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            # Analytics and verification tags are emitted only when these are set.
+            # They are repository variables, so turning them on needs no code change.
             - name: Build site
               run: npm run build
+              env:
+                  PLAUSIBLE_DOMAIN: ${{ vars.PLAUSIBLE_DOMAIN }}
+                  GA4_MEASUREMENT_ID: ${{ vars.GA4_MEASUREMENT_ID }}
+                  GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+                  BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
 
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3

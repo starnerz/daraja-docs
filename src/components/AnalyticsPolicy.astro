@@ -1,0 +1,47 @@
+---
+/**
+ * States what the deployed site actually measures, so the privacy policy can
+ * never drift from the analytics configured in `astro.config.mjs`. Evaluated
+ * at build time from the same environment variables.
+ */
+const { PLAUSIBLE_DOMAIN, GA4_MEASUREMENT_ID } = process.env;
+---
+
+{
+    !PLAUSIBLE_DOMAIN && !GA4_MEASUREMENT_ID && (
+        <p>
+            This site runs no analytics and sets no cookies. Nothing you do here is recorded
+            beyond the request logs described below.
+        </p>
+    )
+}
+
+{
+    PLAUSIBLE_DOMAIN && (
+        <p>
+            Page views are counted with <a href="https://plausible.io/privacy">Plausible
+            Analytics</a>, which is cookieless and collects no personal data. It records the
+            page you viewed, the referring site, and a country, browser and device type derived
+            from your IP address. Your IP address itself is never stored, and no identifier
+            follows you between sites or between visits.
+        </p>
+    )
+}
+
+{
+    GA4_MEASUREMENT_ID && (
+        <p>
+            Page views are measured with Google Analytics 4, which sets cookies in your browser
+            and shares data with Google. See{' '}
+            <a href="https://policies.google.com/privacy">Google's privacy policy</a> and{' '}
+            <a href="https://policies.google.com/technologies/partner-sites">
+                how Google uses data from sites that use its services
+            </a>
+            . You can opt out with the{' '}
+            <a href="https://tools.google.com/dlpage/gaoptout">
+                Google Analytics opt-out add-on
+            </a>{' '}
+            or by blocking the script.
+        </p>
+    )
+}
