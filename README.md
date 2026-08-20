@@ -18,6 +18,15 @@ npm run build    # writes to dist/
 npm run preview  # serve the built site
 ```
 
+Regenerate the lock file with the npm the CI runner uses, not whatever is
+installed locally. Node 22 ships npm 10; npm 11 omits optional dependencies —
+`@emnapi/runtime`, reached through sharp's wasm fallback — that npm 10's
+`npm ci` then refuses to install:
+
+```bash
+npx npm@10 install --package-lock-only
+```
+
 ## Structure
 
 ```
