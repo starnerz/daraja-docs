@@ -23,10 +23,10 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v5
+              uses: actions/checkout@v7
 
             - name: Setup Node
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: npm
@@ -45,7 +45,7 @@ jobs:
                   BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
 
             - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
+              uses: actions/upload-pages-artifact@v5
               with:
                   path: dist
 
@@ -60,4 +60,4 @@ jobs:
         steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v4
+              uses: actions/deploy-pages@v5
