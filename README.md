@@ -3,8 +3,9 @@
 Documentation for [starnerz/laravel-daraja](https://github.com/starnerz/laravel-daraja),
 a Laravel package for the Safaricom M-Pesa Daraja APIs.
 
-Published at **https://starnerz.github.io/daraja-docs/** — moving to a custom
-domain, see [DOMAIN-SWITCH.md](DOMAIN-SWITCH.md).
+Published at **https://laraveldaraja.com/**. It moved there from a GitHub
+Pages project site on 1 September 2026; [DOMAIN-SWITCH.md](DOMAIN-SWITCH.md)
+records how, and what is still open.
 
 ## Local development
 
