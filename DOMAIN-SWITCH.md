@@ -1,9 +1,14 @@
 # Moving to a custom domain
 
-The site is a GitHub Pages *project* site, so it is served from
-`starnerz.github.io/daraja-docs/`. That caps what the site can do: `robots.txt`
-is only read from the root of a domain, authority accrues to `github.io` rather
-than to you, and the display URL is a poor one to put on anything commercial.
+> **Steps 1–4 are done.** The site moved from `starnerz.github.io/daraja-docs/`
+> to `laraveldaraja.com` on 1 September 2026. What follows is kept as the record
+> of how, and because steps 5–8 are still open.
+
+The site was a GitHub Pages *project* site, served from
+`starnerz.github.io/daraja-docs/`. That capped what the site could do:
+`robots.txt` is only read from the root of a domain, authority accrues to
+`github.io` rather than to you, and the display URL is a poor one to put on
+anything commercial.
 
 Everything in the repository derives its URLs from two lines in
 `astro.config.mjs`, so the move is small. This is the whole checklist.

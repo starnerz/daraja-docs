@@ -5,18 +5,19 @@ import starlightLlmsTxt from 'starlight-llms-txt';
 
 /*
  * ---------------------------------------------------------------------------
- * Domain switch
+ * Site URL
  *
- * The docs are a GitHub Pages *project* site today, so every URL carries the
- * repo name. When the custom domain lands: set SITE to it, set BASE to
- * undefined, and add `public/CNAME`. Nothing else in the site hard-codes a
- * URL — canonicals, sitemap, robots.txt, OG images and JSON-LD all derive from
- * these two lines. See DOMAIN-SWITCH.md for the full checklist.
+ * The docs are served from an apex custom domain, so pages sit at the root and
+ * BASE stays undefined. `public/CNAME` is committed because each Actions deploy
+ * replaces the published tree and a domain set only in Settings → Pages does
+ * not survive that. Nothing else in the site hard-codes a URL — canonicals,
+ * sitemap, robots.txt, OG images and JSON-LD all derive from these two lines.
+ * Moving back to a project site means setting BASE to '/<repo>' again.
  * ---------------------------------------------------------------------------
  */
-const SITE = 'https://starnerz.github.io';
+const SITE = 'https://laraveldaraja.com';
 /** @type {string | undefined} */
-const BASE = '/daraja-docs';
+const BASE = undefined;
 
 /*
  * Analytics and search-engine verification come from the environment, so
