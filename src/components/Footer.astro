@@ -1,0 +1,38 @@
+---
+/**
+ * Starlight's own footer, with a trademark notice under it.
+ *
+ * This site documents an independent package whose name carries two other
+ * companies' marks, on a domain that carries one of them. Saying so once, on
+ * every page, is what keeps that an accurate description of an open-source
+ * project rather than an implied endorsement — and it is cheaper to publish
+ * now than to be asked for later.
+ */
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default><slot /></Default>
+
+<p class="disclaimer">
+    An independent open-source project, not affiliated with, endorsed by, or sponsored
+    by Safaricom PLC or Laravel LLC. <i>M-Pesa</i> and <i>Daraja</i> are trademarks of
+    Safaricom PLC; <i>Laravel</i> is a trademark of Laravel LLC. Used here only to say
+    what this package works with.
+</p>
+
+<style>
+    .disclaimer {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--sl-color-gray-6);
+        font-size: var(--sl-text-xs);
+        line-height: 1.6;
+        color: var(--sl-color-gray-3);
+        text-wrap: pretty;
+    }
+
+    .disclaimer i {
+        font-style: normal;
+        color: var(--sl-color-gray-2);
+    }
+</style>

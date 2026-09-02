@@ -81,6 +81,10 @@ export default defineConfig({
                 'A Laravel package for the Safaricom M-Pesa Daraja APIs — STK Push, C2B, B2C, QR, Ratiba, Bill Manager and more.',
             logo: { src: './src/assets/logo.svg', replacesTitle: false },
             head,
+            // Starlight's footer, plus the trademark notice under it.
+            components: {
+                Footer: './src/components/Footer.astro',
+            },
             // Search titles, OpenGraph images and JSON-LD.
             routeMiddleware: './src/routeData.ts',
             plugins: [
