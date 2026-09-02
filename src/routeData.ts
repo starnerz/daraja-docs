@@ -1,5 +1,5 @@
 import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
-import { ogImageId, sectionLabels, seoTitles } from './seo';
+import { ogImageId, seoTitles } from './seo';
 
 const PACKAGE_REPO = 'https://github.com/starnerz/laravel-daraja';
 const AUTHOR = { '@type': 'Person', name: 'Stanley Mbaabu' } as const;
@@ -101,23 +101,27 @@ export const onRequest = defineRouteMiddleware((context) => {
         });
     }
 
-    // Breadcrumbs mirror the sidebar: home → section → page.
-    const section = id.includes('/') ? id.split('/')[0]! : undefined;
-    const crumbs = [
-        { name: 'Laravel Daraja', item: absolute('/') },
-        ...(section && sectionLabels[section] ? [{ name: sectionLabels[section]! }] : []),
-        ...(id === '' ? [] : [{ name: entry.data.title, item: pageUrl }]),
-    ];
+    // Breadcrumbs: home → page. The sidebar's section headings are labels, not
+    // routes — `/apis/` and the rest 404 — and Google only lets the final
+    // `ListItem` omit `item`, so a section crumb sat in the middle with no URL
+    // and the whole trail was rejected. The home page gets no trail at all
+    // rather than one that points only at itself.
+    if (id !== '') {
+        const crumbs = [
+            { name: 'Laravel Daraja', item: absolute('/') },
+            { name: entry.data.title, item: pageUrl },
+        ];
 
-    graph.push({
-        '@type': 'BreadcrumbList',
-        itemListElement: crumbs.map((crumb, index) => ({
-            '@type': 'ListItem',
-            position: index + 1,
-            name: crumb.name,
-            ...(crumb.item ? { item: crumb.item } : {}),
-        })),
-    });
+        graph.push({
+            '@type': 'BreadcrumbList',
+            itemListElement: crumbs.map((crumb, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: crumb.name,
+                item: crumb.item,
+            })),
+        });
+    }
 
     // Pages may declare `faq` in their frontmatter — see `src/content.config.ts`.
     // Only ever mark up answers that are visible on the page itself.

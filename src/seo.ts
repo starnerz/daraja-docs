@@ -43,16 +43,6 @@ export const seoTitles: Record<string, string> = {
     'legal/privacy': 'Privacy policy',
 };
 
-/** Sidebar section labels, used for breadcrumb structured data. */
-export const sectionLabels: Record<string, string> = {
-    'getting-started': 'Getting started',
-    apis: 'APIs',
-    guides: 'Guides',
-    reference: 'Reference',
-    upgrade: 'Upgrading',
-    legal: 'Legal',
-};
-
 /**
  * The content collection calls the home page `index`; Starlight's routing
  * calls it `''`. Both reach this module, so settle on the routing form.
