@@ -26,7 +26,10 @@ export const seoTitles: Record<string, string> = {
     'apis/pull-transactions': 'M-Pesa Pull Transactions in Laravel — recover missed callbacks',
     'apis/lipa-na-bonga': 'Lipa na Bonga Points in Laravel — Daraja API',
 
+    tutorials: 'M-Pesa Laravel tutorials — build a working integration',
     'tutorials/stk-push': 'Accept M-Pesa payments in Laravel — the complete STK Push guide',
+    'tutorials/callbacks-localhost': 'Test M-Pesa callbacks on localhost — ngrok and the alternatives',
+    'tutorials/livewire-checkout': 'M-Pesa checkout with Livewire — a complete component',
 
     'guides/callbacks': 'Handling M-Pesa callbacks in Laravel',
     'guides/reconciliation': 'Reconcile M-Pesa payments in Laravel — find missed callbacks',
