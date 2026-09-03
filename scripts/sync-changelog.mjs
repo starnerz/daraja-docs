@@ -28,8 +28,14 @@ const body = raw
     // Keep a Changelog preamble beneath it.
     .replace(/^#\s+Changelog\s*\n+[\s\S]*?(?=^## )/m, '')
     // Point cross-links at the sibling pages, which keeps them correct
-    // whichever domain and base path the site is served from.
-    .replace(/https:\/\/starnerz\.github\.io\/daraja-docs\/([^)\s]+?)\/(?=[)\s])/g, './$1.md')
+    // whichever domain and base path the site is served from. The changelog
+    // always renders at /changelog/, so siblings are one level up — `./` sent
+    // them to /changelog/upgrade/… instead, which 404s. Both the old Pages
+    // host and the current domain appear in released notes.
+    .replace(
+        /https:\/\/(?:starnerz\.github\.io\/daraja-docs|laraveldaraja\.com)\/([^)\s]+?)\/(?=[)\s])/g,
+        '../$1/',
+    )
     .trim();
 
 const frontmatter = [

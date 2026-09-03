@@ -10,7 +10,7 @@ Every release of [`starnerz/laravel-daraja`](https://packagist.org/packages/star
 ## [5.0.0] — 2026-08-18
 
 A full rewrite. See the
-[upgrade guide](./upgrade/v4-to-v5.md).
+[upgrade guide](../upgrade/v4-to-v5/).
 
 ### Changed — breaking
 
