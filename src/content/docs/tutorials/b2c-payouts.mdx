@@ -1,0 +1,437 @@
+---
+title: Send money to customers
+description: B2C payouts and refunds in Laravel — credentials, idempotency, results, and the states in between.
+faq:
+    - question: How do I send money to a customer with M-Pesa in Laravel?
+      answer: >-
+        Configure an initiator name and password with the ORG B2C API role, then
+        call Daraja::b2c()->business() with the phone number, amount and your own
+        OriginatorConversationID. Safaricom acknowledges the request immediately
+        and delivers the outcome later to your result URL, which arrives as a
+        ResultReceived event with a type of b2c.
+    - question: How do I stop duplicate M-Pesa payouts?
+      answer: >-
+        Supply your own OriginatorConversationID derived from the payout record,
+        so a retry sends the same identifier. Safaricom rejects the second
+        request with 500.002.1001 Duplicate OriginatorConversationID, which
+        means the first one is already in flight and should be waited on rather
+        than sent again.
+    - question: What does M-Pesa result code 2001 mean?
+      answer: >-
+        The initiator information is invalid. Almost always the initiator
+        password is wrong, or the security credential was encrypted with the
+        sandbox certificate while talking to production. Result code 21 is the
+        related failure where the credentials are right but the operator lacks
+        the ORG B2C API initiator role.
+    - question: Can an M-Pesa B2C payout be reversed?
+      answer: >-
+        Not through the API. Safaricom's Reversal API covers C2B transactions
+        only, so a B2C payout sent to the wrong number has to be reversed
+        manually on the M-Pesa organisation portal, if at all. This is why
+        payouts deserve stricter controls than payments coming in.
+---
+
+import HireMe from '../../../components/HireMe.astro';
+
+Taking money is forgiving. A failed payment is a customer who tries again.
+
+Sending money is not. A payout to the wrong number is gone — Safaricom's
+Reversal API covers C2B only, so a mistaken B2C payment is a phone call to your
+account manager rather than a line of code.
+
+This page builds payouts with that in mind: refunds, supplier payments,
+winnings, salaries. The API call is four lines. Everything else here is about
+sending exactly once and knowing afterwards what happened.
+
+## Before you start
+
+Three things have to be true before a single request will work.
+
+**An API operator exists.** On the M-Pesa organisation portal, not the Daraja
+portal. It has a username and a password, and those are your initiator name and
+credential.
+
+**That operator holds the ORG B2C API initiator role.** Without it you get
+result code `21` — correct credentials, insufficient permission.
+
+**The Utility account has money in it.** B2C debits Utility, not Working. Funds
+in the wrong account produce `1 Insufficient balance` while the portal shows a
+healthy total.
+
+## Configure it
+
+```dotenv
+DARAJA_MODE=sandbox
+DARAJA_CONSUMER_KEY=your-consumer-key
+DARAJA_CONSUMER_SECRET=your-consumer-secret
+
+DARAJA_INITIATOR_NAME=testapi
+DARAJA_INITIATOR_CREDENTIAL=your-initiator-password
+DARAJA_INITIATOR_SHORTCODE=600999
+
+DARAJA_ROUTES_ENABLED=true
+DARAJA_B2C_RESULT_URL=https://your-domain/daraja/result/b2c
+DARAJA_B2C_TIMEOUT_URL=https://your-domain/daraja/timeout/b2c
+```
+
+`DARAJA_INITIATOR_CREDENTIAL` is the plaintext password. The package encrypts it
+with Safaricom's public certificate on every request, because the encryption is
+randomised and a stored value would be stale.
+
+Check the pieces separately before writing code:
+
+```bash
+php artisan daraja:token         # consumer key and secret
+php artisan daraja:credential    # initiator password and certificate
+```
+
+The second prints the certificate path it used. That is how you catch the most
+common production failure — sandbox certificate, live host, and a `2001 The
+initiator information is invalid` that looks like a wrong password.
+
+:::note[The output changes every run]
+`daraja:credential` produces a different string each time. PKCS #1 v1.5 padding
+is randomised, so that is correct rather than broken.
+:::
+
+## Where payouts live
+
+```php
+Schema::create('payouts', function (Blueprint $table) {
+    $table->id();
+    $table->string('reference')->unique();          // sent as OriginatorConversationID
+    $table->foreignId('order_id')->nullable()->constrained();
+    $table->decimal('amount', 12, 2);
+    $table->string('phone');
+    $table->string('state')->default('queued');     // queued|requested|paid|failed|unknown
+    $table->string('conversation_id')->nullable();
+    $table->string('receipt')->nullable()->unique();
+    $table->string('receiver_name')->nullable();
+    $table->string('failure_reason')->nullable();
+    $table->timestamp('paid_at')->nullable();
+    $table->foreignId('requested_by')->nullable()->constrained('users');
+    $table->timestamps();
+});
+```
+
+`reference` carries the weight here. It is unique, it is yours, and it is what
+you send to Safaricom as the `OriginatorConversationID` — the field the API
+uses to reject a payout it has already seen.
+
+`unknown` is a real state, not a placeholder. A payout can genuinely be in it,
+and pretending otherwise is how one gets sent twice.
+
+## Send it
+
+Two rules, and they are both about ordering.
+
+**Write the row first.** If the HTTP request times out after Safaricom received
+it, a row created afterwards never exists — and you have money possibly sent
+with no record of it.
+
+**Send from a job, never from a controller.** A browser retry should not be able
+to move money.
+
+```php
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Starnerz\LaravelDaraja\Exceptions\ApiRequestException;
+use Starnerz\LaravelDaraja\Facades\Daraja;
+
+class SendPayout implements ShouldQueue, ShouldBeUnique
+{
+    public int $tries = 1;
+
+    public function __construct(public Payout $payout) {}
+
+    public function uniqueId(): string
+    {
+        return $this->payout->reference;
+    }
+
+    public function handle(): void
+    {
+        if ($this->payout->state !== 'queued') {
+            return;
+        }
+
+        try {
+            $acknowledgement = Daraja::b2c()->business(
+                phone: $this->payout->phone,
+                amount: $this->payout->amount,
+                remarks: "Refund for order {$this->payout->order_id}",
+                originatorConversationId: $this->payout->reference,
+            );
+        } catch (ApiRequestException $exception) {
+            $this->payout->update(
+                $exception->errorCode === '500.002.1001'
+                    // Safaricom already has this one. It is in flight, not failed.
+                    ? ['state' => 'requested']
+                    : ['state' => 'failed', 'failure_reason' => $exception->getMessage()],
+            );
+
+            return;
+        }
+
+        $this->payout->update([
+            'state' => 'requested',
+            'conversation_id' => $acknowledgement->conversationId,
+        ]);
+    }
+}
+```
+
+`$tries = 1` is deliberate. Automatic retries are a good default for reads and a
+bad one for disbursements.
+
+A retry that reaches Safaricom on a request you thought had failed is the exact
+scenario the unique reference exists to catch.
+
+:::danger[`accepted()` does not mean sent]
+`$acknowledgement->accepted()` means Safaricom queued the request. Nobody has
+been paid at that point. The outcome arrives later on the result URL, and it can
+say no.
+:::
+
+There are three command types, differing only in what M-Pesa shows the
+recipient:
+
+```php
+Daraja::b2c()->business('0712345678', 2500, 'Refund for order 41');
+Daraja::b2c()->salary('0712345678', 45000, 'March salary');
+Daraja::b2c()->promotion('0712345678', 1000, 'Competition winner');
+```
+
+And `pochi()` for a customer's Pochi la Biashara wallet, which uses a different
+endpoint but takes the same arguments.
+
+| | |
+|---|---|
+| Minimum | KES 10 |
+| Maximum per transaction | KES 250,000 |
+| Maximum daily value | KES 500,000 |
+| Maximum recipient balance | KES 500,000 |
+
+## Record the result
+
+The answer arrives at `/daraja/result/b2c` as a `ResultReceived` event. One
+listener can serve every asynchronous API, so branch on the type:
+
+```php
+use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Starnerz\LaravelDaraja\Events\ResultReceived;
+
+class RecordPayoutResult implements ShouldQueue
+{
+    public function handle(ResultReceived $event): void
+    {
+        if ($event->type !== 'b2c') {
+            return;
+        }
+
+        $result = $event->result;
+
+        $payout = Payout::firstWhere('reference', $result->originatorConversationId);
+
+        if (! $payout) {
+            return;
+        }
+
+        if (! $result->successful()) {
+            $payout->update([
+                'state' => 'failed',
+                'failure_reason' => "{$result->resultCode}: {$result->resultDescription}",
+            ]);
+
+            return;
+        }
+
+        $payout->update([
+            'state' => 'paid',
+            'receipt' => $result->receipt(),
+            'receiver_name' => $result->receiverName(),
+            'paid_at' => CarbonImmutable::createFromFormat(
+                'd.m.Y H:i:s',
+                $result->parameters->string('TransactionCompletedDateTime'),
+                'Africa/Nairobi',
+            ),
+        ]);
+    }
+}
+```
+
+`receiverName()` returns `254708374149 - JOHN DOE`, which is the only place the
+recipient's real name appears. Store it. When somebody asks six months later
+whether the right person was paid, it is the answer.
+
+`TransactionCompletedDateTime` arrives as `19.12.2019 11:45:50` — a different
+format from every other timestamp in the API, which are `YmdHis`. Parse it
+explicitly.
+
+There is also `recipientIsRegistered()`, which returns `true`, `false` or
+`null`. `false` means the money went to an unregistered M-Pesa user, who has to
+collect it differently.
+
+| Result code | Meaning |
+|---|---|
+| `0` | Paid |
+| `1` | Insufficient balance in the **Utility** account |
+| `2` / `3` | Below minimum, or above maximum |
+| `4` | Would exceed the daily transfer limit |
+| `8` | Would exceed the recipient's maximum balance |
+| `11` | B2C account not active |
+| `21` | Initiator lacks the ORG B2C API initiator role |
+| `2001` | Invalid initiator information |
+| `2040` | Recipient is not a registered M-Pesa customer |
+| `8006` | Security credential is locked |
+
+`8006` is worth recognising on sight. Repeated wrong passwords lock the
+credential, and only the portal unlocks it — no amount of retrying helps.
+
+## The timeout callback
+
+Safaricom posts to your timeout URL when it could not process the request in
+time.
+
+```php
+use Starnerz\LaravelDaraja\Events\TimeoutReceived;
+
+Event::listen(function (TimeoutReceived $event) {
+    if ($event->type === 'b2c') {
+        Log::warning('B2C timed out', $event->payload);
+    }
+});
+```
+
+:::caution[A timeout is not a failure]
+It says Safaricom's queue did not get to the request in time. It does not say
+the payout did not happen. Marking it failed and sending another one is how a
+customer gets paid twice.
+:::
+
+Leave the payout in `requested`, or move it to `unknown`, and find out.
+
+## When nothing arrives at all
+
+Results go missing the same way callbacks do. Sweep for payouts that have been
+waiting too long and ask Safaricom directly:
+
+```php
+Payout::where('state', 'requested')
+    ->where('updated_at', '<', now()->subMinutes(15))
+    ->each(function (Payout $payout) {
+        Daraja::transaction()->queryByConversationId($payout->reference);
+    });
+```
+
+That query is asynchronous too. The answer lands on your transaction status
+result URL, as another `ResultReceived` event with a type of
+`transaction-status`, carrying the transaction's stage: `Completed`,
+`Cancelled`, `Declined`, `Expired` or one of the pending states.
+
+Run it on a schedule. A payout stuck in `requested` is not a display bug — it is
+an amount of money you cannot currently account for.
+
+## Test it without moving money
+
+```php
+it('sends a payout once and records the acknowledgement', function () {
+    Http::fake([
+        '*/oauth/*' => Http::response(['access_token' => 'test', 'expires_in' => '3599']),
+        '*/mpesa/b2c/*' => Http::response([
+            'ConversationID' => 'AG_20191219_00005797af5d7d75f652',
+            'OriginatorConversationID' => 'payout-41',
+            'ResponseCode' => '0',
+            'ResponseDescription' => 'Accept the service request successfully.',
+        ]),
+    ]);
+
+    $payout = Payout::factory()->create(['reference' => 'payout-41']);
+
+    SendPayout::dispatchSync($payout);
+
+    expect($payout->fresh()->state)->toBe('requested');
+
+    Http::assertSentCount(2);   // the token, then the payout
+});
+```
+
+Then the half that decides whether anyone was actually paid — post a real result
+payload at the route:
+
+```php
+it('marks the payout paid when the result says so', function () {
+    $payout = Payout::factory()->create([
+        'reference' => 'payout-41',
+        'state' => 'requested',
+    ]);
+
+    $this->postJson('/daraja/result/b2c', ['Result' => [
+        'ResultType' => 0,
+        'ResultCode' => 0,
+        'ResultDesc' => 'The service request is processed successfully.',
+        'OriginatorConversationID' => 'payout-41',
+        'ConversationID' => 'AG_20191219_00005797af5d7d75f652',
+        'TransactionID' => 'NLJ41HAY6Q',
+        'ResultParameters' => ['ResultParameter' => [
+            ['Key' => 'TransactionAmount', 'Value' => 2500],
+            ['Key' => 'TransactionReceipt', 'Value' => 'NLJ41HAY6Q'],
+            ['Key' => 'ReceiverPartyPublicName', 'Value' => '254708374149 - John Doe'],
+            ['Key' => 'TransactionCompletedDateTime', 'Value' => '19.12.2019 11:45:50'],
+            ['Key' => 'B2CRecipientIsRegisteredCustomer', 'Value' => 'Y'],
+        ]],
+    ]])->assertOk();
+
+    expect($payout->fresh())
+        ->state->toBe('paid')
+        ->receipt->toBe('NLJ41HAY6Q');
+});
+```
+
+Test a failure payload too. On failure Safaricom drops `ResultParameters`
+entirely and the inner list degrades to a single object rather than an array —
+the package absorbs both, but a handler reaching into the raw payload will not.
+
+## Rails worth building
+
+Payouts are the part of an integration that gets audited. A short list, in
+rough order of how much trouble each one saves:
+
+- **One row per payout, written before the request.** No row, no evidence.
+- **Your own `OriginatorConversationID`, derived from that row.** Retries then
+  collide with themselves instead of paying twice.
+- **`ShouldBeUnique` and `$tries = 1`.** The queue is not allowed to improvise.
+- **An approval step above some amount.** A typo in an amount field is not a
+  rare event.
+- **A sweep for anything stuck.** Silence is the failure mode that costs the
+  most.
+- **Somewhere to see failed payouts.** They need a decision from a person, and
+  a log line is not a decision.
+
+## What breaks in production
+
+1. **Sandbox certificate, live host.** Every request comes back `2001`, and the
+   password looks wrong when it is not.
+2. **The operator without the B2C role.** Result code `21`, after everything
+   else has been checked twice.
+3. **Money in the Working account.** `1 Insufficient balance` with a full
+   balance on screen.
+4. **Retrying a timeout.** The one failure mode that costs real money.
+5. **A locked credential.** `8006`, usually the morning after somebody tested
+   with the wrong password in a loop.
+6. **The result URL nobody registered.** Payouts succeed, and every one of them
+   sits in `requested` forever.
+
+<HireMe
+    subject="M-Pesa payouts (B2C)"
+    note="Payouts are the unforgiving half of M-Pesa: unique originator IDs, locked security credentials, split account balances, and no API reversal when one goes to the wrong number."
+/>
+
+## Next
+
+Money out has the same reconciliation problem as money in, with higher stakes:
+[Reconciling payments](../../guides/reconciliation/).
+
+Before the first real payout, [Going live](../../guides/going-live/) is the
+checklist Safaricom expects you to have worked through.
