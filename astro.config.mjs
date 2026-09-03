@@ -148,6 +148,15 @@ export default defineConfig({
                     ],
                 },
                 {
+                    label: 'Tutorials',
+                    items: [
+                        { label: 'Overview', slug: 'tutorials' },
+                        { label: 'Accept M-Pesa payments', slug: 'tutorials/stk-push' },
+                        { label: 'Callbacks on localhost', slug: 'tutorials/callbacks-localhost' },
+                        { label: 'Checkout with Livewire', slug: 'tutorials/livewire-checkout' },
+                    ],
+                },
+                {
                     label: 'APIs',
                     items: [
                         { label: 'Overview', slug: 'apis/overview' },

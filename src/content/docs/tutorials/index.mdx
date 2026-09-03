@@ -1,17 +1,7 @@
 ---
 title: Tutorials
 description: Start-to-finish M-Pesa integrations in Laravel — build one, then keep it running.
-draft: true
 ---
-
-{/*
-    SKELETON — draft: true keeps this out of production builds, because it is
-    the section index and the section has one unpublished page in it. Publish
-    it together with the first tutorial, and add both to the sidebar in
-    astro.config.mjs at the same time.
-
-    Target query: "mpesa laravel tutorial".
-*/}
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
@@ -28,6 +18,20 @@ breaks in production as well as what works in sandbox.
         the failure cases handled rather than ignored.
 
         [Start here](../tutorials/stk-push/)
+    </Card>
+
+    <Card title="Testing callbacks on localhost" icon="laptop">
+        Why Safaricom cannot reach your laptop, what to do instead, and the
+        checklist for when nothing arrives.
+
+        [Read it](../tutorials/callbacks-localhost/)
+    </Card>
+
+    <Card title="M-Pesa checkout with Livewire" icon="document">
+        A component that pushes a prompt and updates itself when the payment
+        lands, with a timeout and the failure states filled in.
+
+        [Read it](../tutorials/livewire-checkout/)
     </Card>
 </CardGrid>
 
