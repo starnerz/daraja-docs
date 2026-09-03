@@ -6,11 +6,33 @@ draft: true
 
 <!--
     SKELETON — draft: true keeps this out of production builds. It renders in
-    `npm run dev` only. Delete the flag when the prose is written, and add the
-    sidebar entry in astro.config.mjs at the same time.
+    `npm run dev` only.
 
     Target queries: "mpesa laravel", "stk push laravel", "lipa na mpesa api laravel".
     Everything else on the site should link up to this page.
+
+    ------------------------------------------------------------------------
+    Publishing the section: four edits, and they go together. One finished
+    tutorial is enough — the gate is whether /tutorials/ exists in a production
+    build at all, not how many pages sit under it.
+
+    1. Delete `draft: true` from this file.
+    2. Delete `draft: true` from tutorials/index.mdx.
+    3. Uncomment the tutorials card in index.mdx — it sits just above the
+       "Seventeen APIs" card.
+    4. Add this to `sidebar` in astro.config.mjs, between Getting started and
+       APIs, so somebody arriving on "mpesa stk push laravel" meets the
+       tutorial before the reference tree:
+
+           {
+               label: 'Tutorials',
+               items: [
+                   { label: 'Overview', slug: 'tutorials' },
+                   { label: 'Accept M-Pesa payments', slug: 'tutorials/stk-push' },
+               ],
+           },
+
+    Then `npm run build`, and check the page count went up by two.
 -->
 
 ## What you will build
