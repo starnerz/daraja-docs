@@ -1,0 +1,44 @@
+---
+title: Tutorials
+description: Start-to-finish M-Pesa integrations in Laravel — build one, then keep it running.
+draft: true
+---
+
+{/*
+    SKELETON — draft: true keeps this out of production builds, because it is
+    the section index and the section has one unpublished page in it. Publish
+    it together with the first tutorial, and add both to the sidebar in
+    astro.config.mjs at the same time.
+
+    Target query: "mpesa laravel tutorial".
+*/}
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+The rest of this site answers questions about one API at a time. These pages
+build something end to end — the whole path from an empty Laravel application to
+a payment you can prove arrived.
+
+Each one is a working integration rather than a snippet, and each says what
+breaks in production as well as what works in sandbox.
+
+<CardGrid>
+    <Card title="Accept M-Pesa payments" icon="rocket">
+        Send an STK push, receive the callback, and record the payment — with
+        the failure cases handled rather than ignored.
+
+        [Start here](../tutorials/stk-push/)
+    </Card>
+</CardGrid>
+
+## Then keep it running
+
+Taking one payment is the easy half. These guides cover the part that decides
+whether your books are right a month later:
+
+- [Reconciling payments](../guides/reconciliation/) — find the payments
+  whose callbacks never arrived, and prove the ones that did.
+- [Handling callbacks](../guides/callbacks/) — the routes, the events, and
+  why a callback is not a record.
+- [Going live](../guides/going-live/) — what Safaricom requires before real
+  money moves.
