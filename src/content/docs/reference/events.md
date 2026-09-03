@@ -14,17 +14,17 @@ An M-Pesa Express prompt concluded.
 ```php
 public function handle(StkCallbackReceived $event): void
 {
-    $c = $event->callback;   // StkCallback
+    $callback = $event->callback;   // StkCallback
 
-    $c->successful();
-    $c->cancelledByUser();   // 1032
-    $c->timedOut();          // 1037 or 1031
-    $c->receipt();
-    $c->amount();
-    $c->phoneNumber();
-    $c->transactionDate();
-    $c->checkoutRequestId;
-    $c->resultCode;          // always a string
+    $callback->successful();
+    $callback->cancelledByUser();   // 1032
+    $callback->timedOut();          // 1037 or 1031
+    $callback->receipt();
+    $callback->amount();
+    $callback->phoneNumber();
+    $callback->transactionDate();
+    $callback->checkoutRequestId;
+    $callback->resultCode;          // always a string
 }
 ```
 
@@ -33,15 +33,15 @@ public function handle(StkCallbackReceived $event): void
 A customer paid your short code and Safaricom confirmed it.
 
 ```php
-$t = $event->transaction;    // C2BTransaction
+$transaction = $event->transaction;    // C2BTransaction
 
-$t->transactionId;
-$t->amount;
-$t->billReferenceNumber;
-$t->msisdn;                  // masked
-$t->fullName();
-$t->isPayBill();
-$t->isConfirmation();
+$transaction->transactionId;
+$transaction->amount;
+$transaction->billReferenceNumber;
+$transaction->msisdn;                  // masked
+$transaction->fullName();
+$transaction->isPayBill();
+$transaction->isConfirmation();
 ```
 
 ## C2BValidationRequested

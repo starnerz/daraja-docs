@@ -39,9 +39,9 @@ $response->checkoutRequestId; // ws_CO_1912…`}
 
         <Code
             lang="php"
-            code={`Event::listen(function (StkCallbackReceived $e) {
-    if ($e->callback->successful()) {
-        Order::markPaid($e->callback->receipt());
+            code={`Event::listen(function (StkCallbackReceived $event) {
+    if ($event->callback->successful()) {
+        Order::markPaid($event->callback->receipt());
     }
 });`}
         />

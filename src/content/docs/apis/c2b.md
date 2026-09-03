@@ -51,14 +51,14 @@ use Starnerz\LaravelDaraja\Events\C2BPaymentReceived;
 
 public function handle(C2BPaymentReceived $event): void
 {
-    $t = $event->transaction;
+    $transaction = $event->transaction;
 
     Payment::create([
-        'receipt' => $t->transactionId,
-        'amount' => $t->amount,
-        'account' => $t->billReferenceNumber,
-        'payer' => $t->fullName(),
-        'phone' => $t->msisdn,          // masked: 2547 ***** 126
+        'receipt' => $transaction->transactionId,
+        'amount' => $transaction->amount,
+        'account' => $transaction->billReferenceNumber,
+        'payer' => $transaction->fullName(),
+        'phone' => $transaction->msisdn,          // masked: 2547 ***** 126
     ]);
 }
 ```
@@ -79,14 +79,14 @@ Because that is synchronous, it uses a decision callback rather than an event:
 use Starnerz\LaravelDaraja\Data\Callbacks\C2BTransaction;
 use Starnerz\LaravelDaraja\Facades\Daraja;
 
-Daraja::validateC2BUsing(function (C2BTransaction $t): bool|string {
-    $invoice = Invoice::where('reference', $t->billReferenceNumber)->first();
+Daraja::validateC2BUsing(function (C2BTransaction $transaction): bool|string {
+    $invoice = Invoice::where('reference', $transaction->billReferenceNumber)->first();
 
     if (! $invoice) {
         return 'C2B00012';   // Invalid Account Number
     }
 
-    if ((float) $t->amount < $invoice->balance) {
+    if ((float) $transaction->amount < $invoice->balance) {
         return 'C2B00013';   // Invalid Amount
     }
 

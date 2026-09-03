@@ -64,15 +64,15 @@ oversized one before sending.
 
 ```php
 Daraja::billManager()->bulkInvoice(
-    $invoices->map(fn ($i) => [
-        'externalReference' => $i->reference,
-        'billedFullName' => $i->customer_name,
-        'billedPhoneNumber' => $i->phone,
-        'billedPeriod' => $i->period,
-        'invoiceName' => $i->description,
-        'dueDate' => $i->due_at->toDateString(),
-        'accountReference' => $i->account,
-        'amount' => $i->total,
+    $invoices->map(fn ($invoice) => [
+        'externalReference' => $invoice->reference,
+        'billedFullName' => $invoice->customer_name,
+        'billedPhoneNumber' => $invoice->phone,
+        'billedPeriod' => $invoice->period,
+        'invoiceName' => $invoice->description,
+        'dueDate' => $invoice->due_at->toDateString(),
+        'accountReference' => $invoice->account,
+        'amount' => $invoice->total,
     ])->all(),
 );
 ```

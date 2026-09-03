@@ -69,7 +69,7 @@ $page2 = Daraja::pull()->query(now()->subDay(), now(), offset: 100);
 
 ```php
 $missed = Daraja::pull()->query(now()->subHours(6), now())
-    ->reject(fn ($t) => Payment::where('receipt', $t->transactionId)->exists());
+    ->reject(fn ($pulled) => Payment::where('receipt', $pulled->transactionId)->exists());
 
 foreach ($missed as $transaction) {
     RecordMissedPayment::dispatch($transaction);

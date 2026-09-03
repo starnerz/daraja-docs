@@ -11,8 +11,8 @@ use Starnerz\LaravelDaraja\Exceptions\DarajaException;
 
 try {
     Daraja::stk()->push('0712345678', 100, 'INV-1');
-} catch (DarajaException $e) {
-    report($e);
+} catch (DarajaException $exception) {
+    report($exception);
 }
 ```
 
@@ -33,7 +33,7 @@ The message always names the offending config key or path.
 The token request failed.
 
 ```php
-catch (AuthenticationException $e) {
+catch (AuthenticationException $exception) {
     // Wrong consumer key/secret, or credentials for the other environment
 }
 ```
@@ -46,12 +46,12 @@ sandbox credentials pointed at production or vice versa.
 Daraja rejected the request, or it could not be reached.
 
 ```php
-catch (ApiRequestException $e) {
-    $e->errorCode;   // '400.002.02'
-    $e->requestId;   // '11728-2929992-1'
-    $e->status;      // 400
-    $e->payload;     // decoded body
-    $e->getMessage();
+catch (ApiRequestException $exception) {
+    $exception->errorCode;   // '400.002.02'
+    $exception->requestId;   // '11728-2929992-1'
+    $exception->status;      // 400
+    $exception->payload;     // decoded body
+    $exception->getMessage();
 }
 ```
 
