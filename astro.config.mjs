@@ -28,7 +28,16 @@ const { PLAUSIBLE_DOMAIN, GA4_MEASUREMENT_ID, GOOGLE_SITE_VERIFICATION, BING_SIT
     process.env;
 
 /** @type {NonNullable<Parameters<typeof starlight>[0]['head']>} */
-const head = [];
+const head = [
+    /*
+     * Starlight links /favicon.svg itself. These are the two it does not: a
+     * PNG for the clients that will not take an SVG — Google's search results
+     * among them — and the iOS home-screen icon. All three are the logo mark,
+     * generated from public/favicon.svg.
+     */
+    { tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' } },
+    { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' } },
+];
 
 if (GOOGLE_SITE_VERIFICATION) {
     head.push({
