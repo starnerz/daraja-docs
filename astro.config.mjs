@@ -158,6 +158,7 @@ export default defineConfig({
                     label: 'Guides',
                     items: [
                         { label: 'Handling callbacks', slug: 'guides/callbacks' },
+                        { label: 'Reconciling payments', slug: 'guides/reconciliation' },
                         { label: 'Testing', slug: 'guides/testing' },
                         { label: 'Security credentials', slug: 'guides/security-credentials' },
                         { label: 'Going live', slug: 'guides/going-live' },

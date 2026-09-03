@@ -1,0 +1,349 @@
+---
+title: Reconciling payments
+description: Find the M-Pesa payments your application never recorded, and prove the ones it did.
+faq:
+    - question: Why did my M-Pesa callback never arrive?
+      answer: >-
+        Safaricom delivers a callback once and does not retry usefully. A
+        deployment, a timeout, an exception in your handler, or a callback URL
+        Safaricom cannot reach from the public internet all produce the same
+        outcome: the customer paid and your database never heard about it. The
+        payment is still real, and Pull Transactions can retrieve it for 48
+        hours.
+    - question: How do I reconcile M-Pesa payments in Laravel?
+      answer: >-
+        Register for Pull Transactions once, then query Safaricom's own record
+        for a window and compare it against your payments table on the M-Pesa
+        receipt number. Anything Safaricom lists that you do not have is a
+        payment you missed; anything you have that Safaricom does not list on a
+        settled window is worth investigating.
+    - question: How far back can I reconcile M-Pesa transactions?
+      answer: >-
+        Pull Transactions retains 48 hours. Anything older has to come from a
+        statement exported from the M-Pesa organisation portal, which is a
+        manual job.
+---
+
+import HireMe from '../../../components/HireMe.astro';
+
+A callback is a notification, not a record.
+
+It arrives once, it is not signed, it is not retried usefully, and the payment
+it describes is real whether or not your application ever hears about it.
+
+So there are two records of the same money: Safaricom's and yours.
+Reconciliation is the job of proving they agree, then explaining the places
+they do not.
+
+This guide builds it with the free package alone — an idempotent handler, a
+scheduled pull of Safaricom's own record, and a comparison that reports the
+three ways the two can disagree.
+
+:::caution[48 hours]
+Pull Transactions retains two days and covers C2B only. Everything below runs on
+a schedule for that reason — a weekly reconciliation is not a reconciliation,
+because by the time it runs the evidence is gone.
+:::
+
+## The one rule
+
+**Record the receipt, and make the receipt unique.**
+
+M-Pesa's receipt number (`NEF61H8J60`) is the only identifier both sides agree
+on. It is what a customer reads to you over the phone, what appears on
+Safaricom's statement, and what Pull Transactions returns.
+
+```php
+Schema::create('payments', function (Blueprint $table) {
+    $table->id();
+    $table->string('receipt')->unique();          // the whole mechanism
+    $table->string('checkout_request_id')->nullable()->index();
+    $table->decimal('amount', 12, 2);
+    $table->string('msisdn')->nullable();
+    $table->string('reference')->nullable()->index();
+    $table->timestamp('paid_at');
+    $table->string('source')->default('callback'); // callback | pull | manual
+    $table->timestamp('confirmed_at')->nullable();
+    $table->timestamps();
+});
+```
+
+`source` is worth having from the first migration.
+
+A payment your application learned about from a callback and one it found three
+hours later during reconciliation are equally real and not equally trustworthy.
+Nothing has yet confirmed your application *acted* on the second one.
+
+## Step 1: make the handler idempotent
+
+Safaricom can deliver the same C2B confirmation more than once, and you will
+also replay callbacks yourself while fixing things.
+
+Four deliveries of one payment must produce one row.
+
+```php
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Starnerz\LaravelDaraja\Events\C2BPaymentReceived;
+
+class RecordC2BPayment implements ShouldQueue
+{
+    public function handle(C2BPaymentReceived $event): void
+    {
+        $transaction = $event->transaction;
+
+        $payment = Payment::updateOrCreate(
+            ['receipt' => $transaction->transactionId],
+            [
+                'amount' => $transaction->amount,
+                'msisdn' => $transaction->msisdn,
+                'reference' => $transaction->billReferenceNumber,
+                'paid_at' => now(),
+                'source' => 'callback',
+            ],
+        );
+
+        // Whatever the payment is *for* — and only once.
+        Order::creditOnce($payment);
+    }
+}
+```
+
+Two details that are easy to get wrong:
+
+- **Queue it.** Safaricom does not wait for you, and slow endpoints get spike
+  arrested. The package's routes answer `200` immediately; your work happens
+  after.
+- **`updateOrCreate` on the receipt, not `create`.** The unique index turns a
+  duplicate delivery into an update instead of an exception — and an exception
+  in a queued listener is a lost payment with a stack trace nobody reads.
+
+The same shape works for STK:
+
+```php
+public function handle(StkCallbackReceived $event): void
+{
+    $callback = $event->callback;
+
+    if (! $callback->successful()) {
+        Attempt::where('checkout_request_id', $callback->checkoutRequestId)
+            ->update(['failed_reason' => $callback->resultCode]);
+
+        return;
+    }
+
+    Payment::updateOrCreate(
+        ['receipt' => $callback->receipt()],
+        [
+            'checkout_request_id' => $callback->checkoutRequestId,
+            'amount' => $callback->amount(),
+            'msisdn' => $callback->phoneNumber(),
+            'paid_at' => $callback->transactionDate(),
+            'source' => 'callback',
+        ],
+    );
+}
+```
+
+## Step 2: record what you sent
+
+Reconciliation compares what arrived against what Safaricom has.
+
+It cannot see the third case — a prompt you sent that concluded neither way —
+unless you wrote it down when you sent it.
+
+```php
+$response = Daraja::stk()->push(
+    phone: '0712345678',
+    amount: 1500,
+    accountReference: 'INV-001',
+    description: 'Invoice 001',
+);
+
+Attempt::create([
+    'checkout_request_id' => $response->checkoutRequestId,
+    'amount' => 1500,
+    'reference' => 'INV-001',
+    'requested_at' => now(),
+]);
+```
+
+Anything still open after a few minutes has an answer waiting at Safaricom:
+
+```php
+$status = Daraja::stk()->query($attempt->checkout_request_id);
+```
+
+A prompt the customer never touched, one they cancelled, and one that succeeded
+while your callback endpoint was down look identical from your database. This
+is the query that tells them apart.
+
+## Step 3: pull Safaricom's record
+
+Register once per short code, in production, with the MSISDN on your short
+code's KYC record:
+
+```php
+Daraja::pull()->register(
+    nominatedNumber: '0722000000',
+    callbackUrl: 'https://your-domain/daraja/pull',
+);
+```
+
+Then query a window. The return is a Laravel collection, so the rest is
+ordinary:
+
+```php
+$theirs = Daraja::pull()->query(from: now()->subHours(6), to: now());
+
+$theirs->first()->transactionId;   // the receipt — your join key
+$theirs->first()->amount;          // a string: "168.00"
+$theirs->first()->billReference;
+```
+
+## Step 4: compare, and name the disagreement
+
+There are exactly three ways the two records can differ, and they mean
+different things.
+
+```php
+class Reconcile
+{
+    public function run(CarbonInterface $from, CarbonInterface $to): array
+    {
+        $theirs = Daraja::pull()->query($from, $to)->keyBy('transactionId');
+
+        $ours = Payment::whereBetween('paid_at', [$from, $to])
+            ->get()
+            ->keyBy('receipt');
+
+        return [
+            // 1. They have it and you do not. A payment you missed.
+            'missing' => $theirs->diffKeys($ours),
+
+            // 2. Both have it and the figures disagree.
+            'mismatched' => $theirs
+                ->filter(fn ($pulled) => $ours->has($pulled->transactionId))
+                ->filter(fn ($pulled) => bccomp(
+                    (string) $pulled->amount,
+                    (string) $ours[$pulled->transactionId]->amount,
+                    2,
+                ) !== 0),
+
+            // 3. You have it and the pull did not list it.
+            'unlisted' => $ours->diffKeys($theirs),
+        ];
+    }
+}
+```
+
+**Missing** is the case worth building all of this for. The customer paid, the
+callback never arrived, and nothing in your application knows.
+
+**Mismatched** is rare and serious. Compare as decimal strings, never as
+floats, or you will manufacture disagreements that are not there.
+
+**Unlisted** is the noisiest of the three and usually innocent. The pull covers
+C2B only, so every STK payment you recorded appears here, as does anything
+settled either side of your window.
+
+Filter it before you alert on it, or the report becomes something people stop
+reading:
+
+```php
+'unlisted' => $ours->diffKeys($theirs)
+    ->where('source', 'callback')
+    ->where('type', 'c2b')
+    ->filter(fn ($payment) => $payment->paid_at->lt($to->copy()->subMinutes(10))),
+```
+
+## Step 5: import what you missed, carefully
+
+```php
+foreach ($report['missing'] as $pulled) {
+    $payment = Payment::updateOrCreate(
+        ['receipt' => $pulled->transactionId],
+        [
+            'amount' => $pulled->amount,
+            'msisdn' => $pulled->msisdn,
+            'reference' => $pulled->billReference,
+            'paid_at' => Carbon::parse($pulled->date),
+            'source' => 'pull',
+            'confirmed_at' => null,        // deliberately
+        ],
+    );
+
+    ImportedPaymentFound::dispatch($payment);
+}
+```
+
+Leave `confirmed_at` null.
+
+The money is real, but nobody has yet decided what the application should have
+done about it three hours ago — whether that order still ships, whether that
+invoice is still owed, whether the customer has since been refunded by hand.
+
+An imported payment is a task for a person, not a completed one. A
+reconciliation that silently marks things done is how a customer gets charged
+twice.
+
+## Schedule it
+
+```php
+// routes/console.php
+Schedule::command('payments:reconcile')->hourly();
+Schedule::command('payments:sweep-prompts')->everyFiveMinutes();
+```
+
+Hourly is a reasonable default against a 48-hour retention window.
+
+The thing to watch is not the frequency but whether the schedule is *running at
+all*. A reconciliation nobody notices has stopped is worse than none, because
+it is quietly trusted.
+
+## The failure modes, honestly
+
+Everything above is the happy path. These are the parts that will surprise you:
+
+- **48 hours, and C2B only.** B2C, B2B and reversals are not covered by Pull
+  Transactions at all. Payouts have to be reconciled from result callbacks and
+  Transaction Status, one at a time.
+- **Result code `1001` on a query means "no transactions in the period"**, not
+  an error. Treat it as an empty collection or your job will alert every quiet
+  night.
+- **`offset` is a row offset, not a page number.** A busy short code has more
+  rows than one response carries, and a reconciliation that silently reads only
+  the first page reports missing payments that are not missing.
+- **The MSISDN is masked** in C2B callbacks. Matching on phone number rather
+  than receipt does not work, which is the second reason the receipt is the
+  join key.
+- **Amounts are strings, and money is not a float.** `168.00` compared as a
+  float against `168.0` will eventually produce a disagreement that is not one.
+- **Timezones.** Safaricom's timestamps and your server's clock are not
+  necessarily the same, and a window boundary is exactly where a day's takings
+  go missing. Reconcile in one timezone and be explicit about which.
+- **Callbacks are unverified.** There is no signature — only an IP allow-list
+  you have to ask your account manager for. Before releasing goods against a
+  callback alone, confirm with
+  [Transaction Status](../../apis/account-services/#transaction-status).
+- **Nothing above covers a statement.** Anything older than two days lives in
+  the M-Pesa organisation portal as an export, and matching that against your
+  database is a different, manual job.
+
+## What this costs you
+
+The code on this page is roughly four hundred lines once it has error handling,
+tests and a report somebody actually reads. It is four hundred lines you then
+own.
+
+Safaricom changes payload shapes without announcing it. The edge cases above
+are the ones already known, and every one of them was found by somebody's books
+being wrong first.
+
+That is not an argument against writing it. It is worth knowing before you
+start that reconciliation is not a feature you finish — it is one you maintain
+for as long as you take money.
+
+<HireMe
+    note="Reconciliation is where integrations quietly go wrong: the callbacks that never arrived, the payments credited twice, the statement that does not match the ledger."
+    subject="M-Pesa reconciliation"
+/>
