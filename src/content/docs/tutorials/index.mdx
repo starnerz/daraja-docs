@@ -12,6 +12,8 @@ a payment you can prove arrived.
 Each one is a working integration rather than a snippet, and each says what
 breaks in production as well as what works in sandbox.
 
+## Start here
+
 <CardGrid>
     <Card title="Accept M-Pesa payments" icon="rocket">
         Send an STK push, receive the callback, and record the payment — with
@@ -26,12 +28,41 @@ breaks in production as well as what works in sandbox.
 
         [Read it](../tutorials/callbacks-localhost/)
     </Card>
+</CardGrid>
 
+## Put it in front of a customer
+
+<CardGrid>
     <Card title="M-Pesa checkout with Livewire" icon="document">
         A component that pushes a prompt and updates itself when the payment
         lands, with a timeout and the failure states filled in.
 
         [Read it](../tutorials/livewire-checkout/)
+    </Card>
+
+    <Card title="Checkout for a SPA or mobile app" icon="mobile-android">
+        Two endpoints and a polling client for a Vue, React or Flutter front
+        end — with the throttling and authorisation a payment API needs.
+
+        [Read it](../tutorials/api-checkout/)
+    </Card>
+</CardGrid>
+
+## The other directions money moves
+
+<CardGrid>
+    <Card title="Paybill and till payments" icon="download">
+        Payments customers start themselves. Registering the URLs, recording
+        every one of them, and matching an account number a human typed.
+
+        [Read it](../tutorials/c2b-paybill/)
+    </Card>
+
+    <Card title="Sending money out" icon="external">
+        Refunds, payouts and salaries over B2C — sending exactly once, and
+        knowing afterwards what happened.
+
+        [Read it](../tutorials/b2c-payouts/)
     </Card>
 </CardGrid>
 

@@ -30,6 +30,9 @@ export const seoTitles: Record<string, string> = {
     'tutorials/stk-push': 'Accept M-Pesa payments in Laravel — the complete STK Push guide',
     'tutorials/callbacks-localhost': 'Test M-Pesa callbacks on localhost — ngrok and the alternatives',
     'tutorials/livewire-checkout': 'M-Pesa checkout with Livewire — a complete component',
+    'tutorials/api-checkout': 'M-Pesa STK Push API for a Vue, React or Flutter front end',
+    'tutorials/c2b-paybill': 'Receive M-Pesa Paybill payments in Laravel — the C2B tutorial',
+    'tutorials/b2c-payouts': 'Send money with M-Pesa B2C in Laravel — payouts and refunds',
 
     'guides/callbacks': 'Handling M-Pesa callbacks in Laravel',
     'guides/reconciliation': 'Reconcile M-Pesa payments in Laravel — find missed callbacks',

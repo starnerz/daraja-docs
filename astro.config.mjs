@@ -154,6 +154,9 @@ export default defineConfig({
                         { label: 'Accept M-Pesa payments', slug: 'tutorials/stk-push' },
                         { label: 'Callbacks on localhost', slug: 'tutorials/callbacks-localhost' },
                         { label: 'Checkout with Livewire', slug: 'tutorials/livewire-checkout' },
+                        { label: 'Checkout for a SPA or app', slug: 'tutorials/api-checkout' },
+                        { label: 'Paybill and till payments', slug: 'tutorials/c2b-paybill' },
+                        { label: 'Sending money out', slug: 'tutorials/b2c-payouts' },
                     ],
                 },
                 {
