@@ -35,6 +35,7 @@ src/
 ├── content/docs/
 │   ├── index.mdx             landing page
 │   ├── getting-started/      install, configure, sandbox
+│   ├── tutorials/            start-to-finish integrations
 │   ├── apis/                 one page per API family
 │   ├── guides/               callbacks, testing, credentials, going live
 │   ├── reference/            config, events, exceptions, commands, error codes
@@ -136,6 +137,33 @@ from what the deployed site actually measures.
 Pushing to `main` builds and deploys via `.github/workflows/deploy.yml`.
 GitHub Pages must be set to **GitHub Actions** as its source under
 Settings → Pages.
+
+## Planned: the Mizani funnel
+
+The tutorials are the top of a funnel that currently has no bottom. Every one
+of them ends at a problem the free package leaves you to solve by hand — the
+unmatched payments pile in `tutorials/c2b-paybill`, the failed payouts needing
+a human decision in `tutorials/b2c-payouts`, the sweep for stuck attempts, the
+per-tenant reconciliation in `tutorials/multi-tenant`. Those are the places a
+reader is most receptive to being told there is a dashboard for this.
+
+Nothing has been added yet, deliberately: **Mizani is not finished**, and
+sending traffic to a product that is not ready spends the goodwill once. When
+the panel is ready:
+
+- A shared component, in the shape of `src/components/HireMe.astro`, so the
+  wording lives in one file and every tutorial picks up an edit.
+- Placed at the point in each page where the manual work is described, not
+  bolted to the bottom. The `## Next` section of each tutorial is the natural
+  home.
+- Honest about what it is. These pages earn their traffic by being accurate
+  about M-Pesa; an advertisement that oversells undoes that in one visit.
+- `HireMe` stays where it is. Consulting and the product are different offers
+  to different readers, and a page carrying both asks the reader to choose
+  between them.
+
+Until then the tutorials link only to the free guides, which is the correct
+behaviour rather than an oversight — do not add a placeholder.
 
 ## Source of truth
 

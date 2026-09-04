@@ -157,6 +157,8 @@ export default defineConfig({
                         { label: 'Checkout for a SPA or app', slug: 'tutorials/api-checkout' },
                         { label: 'Paybill and till payments', slug: 'tutorials/c2b-paybill' },
                         { label: 'Sending money out', slug: 'tutorials/b2c-payouts' },
+                        { label: 'Subscriptions', slug: 'tutorials/subscriptions' },
+                        { label: 'One app, many short codes', slug: 'tutorials/multi-tenant' },
                     ],
                 },
                 {
