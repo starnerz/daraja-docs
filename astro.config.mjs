@@ -156,6 +156,7 @@ export default defineConfig({
                         { label: 'Checkout with Livewire', slug: 'tutorials/livewire-checkout' },
                         { label: 'Checkout for a SPA or app', slug: 'tutorials/api-checkout' },
                         { label: 'Paybill and till payments', slug: 'tutorials/c2b-paybill' },
+                        { label: 'Payment by QR code', slug: 'tutorials/qr-payments' },
                         { label: 'Sending money out', slug: 'tutorials/b2c-payouts' },
                         { label: 'Subscriptions', slug: 'tutorials/subscriptions' },
                         { label: 'One app, many short codes', slug: 'tutorials/multi-tenant' },

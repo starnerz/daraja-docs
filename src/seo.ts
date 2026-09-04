@@ -32,6 +32,7 @@ export const seoTitles: Record<string, string> = {
     'tutorials/livewire-checkout': 'M-Pesa checkout with Livewire — a complete component',
     'tutorials/api-checkout': 'M-Pesa STK Push API for a Vue, React or Flutter front end',
     'tutorials/c2b-paybill': 'Receive M-Pesa Paybill payments in Laravel — the C2B tutorial',
+    'tutorials/qr-payments': 'M-Pesa QR code payments in Laravel — generate, display, reconcile',
     'tutorials/b2c-payouts': 'Send money with M-Pesa B2C in Laravel — payouts and refunds',
     'tutorials/subscriptions': 'M-Pesa recurring payments in Laravel — subscriptions and Ratiba',
     'tutorials/multi-tenant': 'Multi-tenant M-Pesa in Laravel — one app, many short codes',
