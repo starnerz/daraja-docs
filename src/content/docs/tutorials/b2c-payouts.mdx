@@ -107,7 +107,8 @@ Schema::create('payouts', function (Blueprint $table) {
     $table->string('conversation_id')->nullable();
     $table->string('receipt')->nullable()->unique();
     $table->string('receiver_name')->nullable();
-    $table->string('failure_reason')->nullable();
+    $table->string('failure_code')->nullable();     // 2001
+    $table->string('failure_reason')->nullable();   // Safaricom's own wording
     $table->timestamp('paid_at')->nullable();
     $table->foreignId('requested_by')->nullable()->constrained('users');
     $table->timestamps();
@@ -167,7 +168,11 @@ class SendPayout implements ShouldQueue, ShouldBeUnique
                 $exception->errorCode === '500.002.1001'
                     // Safaricom already has this one. It is in flight, not failed.
                     ? ['state' => 'requested']
-                    : ['state' => 'failed', 'failure_reason' => $exception->getMessage()],
+                    : [
+                        'state' => 'failed',
+                        'failure_code' => $exception->errorCode,
+                        'failure_reason' => $exception->getMessage(),
+                    ],
             );
 
             return;
@@ -241,7 +246,8 @@ class RecordPayoutResult implements ShouldQueue
         if (! $result->successful()) {
             $payout->update([
                 'state' => 'failed',
-                'failure_reason' => "{$result->resultCode}: {$result->resultDescription}",
+                'failure_code' => $result->resultCode,
+                'failure_reason' => $result->resultDescription,
             ]);
 
             return;
@@ -272,6 +278,10 @@ explicitly.
 There is also `recipientIsRegistered()`, which returns `true`, `false` or
 `null`. `false` means the money went to an unregistered M-Pesa user, who has to
 collect it differently.
+
+The failure branch writes the code and Safaricom's description into separate
+columns. Payouts get read by people rather than customers, and `8006` on its
+own tells whoever opens the screen nothing about a locked credential.
 
 | Result code | Meaning |
 |---|---|

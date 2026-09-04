@@ -126,7 +126,10 @@ public function handle(StkCallbackReceived $event): void
 
     if (! $callback->successful()) {
         Attempt::where('checkout_request_id', $callback->checkoutRequestId)
-            ->update(['failed_reason' => $callback->resultCode]);
+            ->update([
+                'failure_code' => $callback->resultCode,
+                'failure_reason' => $callback->resultDescription,
+            ]);
 
         return;
     }

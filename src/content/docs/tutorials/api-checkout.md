@@ -55,14 +55,15 @@ Two endpoints. Resist the third.
 // GET /api/payments/01j8z4q2h9k3m5n7p9r1s3t5v7  →  200 OK
 {
     "id": "01j8z4q2h9k3m5n7p9r1s3t5v7",
-    "state": "paid",
+    "state": "failed",
     "amount": "1500.00",
-    "receipt": "NLJ7RT61SV",
-    "failure_reason": null
+    "receipt": null,
+    "failure_code": "1032",
+    "message": "You cancelled the payment. Try again when you are ready."
 }
 ```
 
-Two decisions in that shape are worth defending.
+Three decisions in that shape are worth defending.
 
 **Safaricom's response never reaches the client.** The `CheckoutRequestID` is an
 identifier for a prompt, not a payment reference, and `ResponseCode` says only
@@ -76,6 +77,15 @@ invitation to walk it. Add `ulid` to the attempts table and bind on it:
 $table->ulid('public_id')->unique();
 $table->foreignId('user_id')->constrained();
 ```
+
+**`message` is yours, not Safaricom's.** The stored `failure_reason` is
+Safaricom's own text — useful in your records, occasionally something like
+`DS timeout user cannot be reached`, and never fit to render. Send a sentence
+you wrote, derived from the code.
+
+`failure_code` goes out alongside it so a client can behave differently for a
+cancelled prompt than for a wrong PIN. That is a classification rather than an
+identifier, which is why it is safe to publish when `CheckoutRequestID` is not.
 
 ## Start the payment
 
@@ -143,7 +153,8 @@ class ShowPaymentController
             'state' => $attempt->state,
             'amount' => $attempt->amount,
             'receipt' => $attempt->payment?->receipt,
-            'failure_reason' => $attempt->failure_reason,
+            'failure_code' => $attempt->failure_code,
+            'message' => $attempt->failureMessage(),
         ])->header('Cache-Control', 'no-store');
     }
 }
@@ -156,8 +167,9 @@ which is exactly what someone walking identifiers wants to learn.
 worker turns a poll into the same answer forever.
 
 Keep the vocabulary small and stable — `pending`, `paid`, `failed`. The client
-should never need to know what `1032` means; translate result codes on the
-server and send the sentence you want shown.
+should never have to know what `1032` means in order to render a screen, which
+is what `failureMessage()` is for:
+[Accept M-Pesa payments](../stk-push/#three-strings-not-two) has it.
 
 ## The client loop
 

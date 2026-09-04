@@ -83,7 +83,8 @@ Schema::create('payment_attempts', function (Blueprint $table) {
     $table->decimal('amount', 12, 2);
     $table->string('phone');
     $table->string('state')->default('pending');   // pending | paid | failed
-    $table->string('failure_reason')->nullable();
+    $table->string('failure_code')->nullable();    // 1032
+    $table->string('failure_reason')->nullable();  // Request cancelled by user
     $table->timestamps();
 });
 
@@ -185,7 +186,8 @@ class RecordPayment implements ShouldQueue
         if (! $callback->successful()) {
             $attempt?->update([
                 'state' => 'failed',
-                'failure_reason' => $callback->resultCode,
+                'failure_code' => $callback->resultCode,
+                'failure_reason' => $callback->resultDescription,
             ]);
 
             return;
@@ -224,8 +226,10 @@ Three decisions in that listener are load bearing:
 - **`updateOrCreate` on the receipt.** Safaricom can deliver the same callback
   twice, and you will replay callbacks yourself while fixing things. The unique
   index turns a second delivery into an update instead of an exception.
-- **The failure branch writes the result code.** `1032` and `1037` are
+- **The failure branch writes the code and the words.** `1032` and `1037` are
   different conversations with a customer, and a null column tells you neither.
+  The code is what you count and branch on; the description is what makes the
+  row readable six months later without anyone consulting a table.
 
 | Result code | What happened |
 |---|---|
@@ -241,6 +245,46 @@ Safaricom locks a subscriber while a session is open. Push twice to the same
 number in quick succession and the second returns `1001`. Wait a minute, or
 disable your pay button while an attempt is pending.
 :::
+
+### Three strings, not two
+
+A failed payment produces three different pieces of text, and they have three
+different audiences. Keeping them apart saves an argument later.
+
+| | Comes from | Read by |
+|---|---|---|
+| `1032` | Safaricom, stable | your code — branch and count on this |
+| `Request cancelled by user` | Safaricom, wording varies | you, reading the row months later |
+| "You cancelled the payment." | you, derived from the code | the customer |
+
+Store the first two. Derive the third:
+
+```php
+public function failureMessage(): string
+{
+    return match ($this->failure_code) {
+        '1032' => 'You cancelled the payment. Try again when you are ready.',
+        '1037', '1031' => 'The prompt timed out. Check your phone has signal and try again.',
+        '2001' => 'That PIN was not accepted. Try again.',
+        '1001' => 'There is already a payment in progress on that number. Wait a minute.',
+        default => 'That payment did not go through. Try again, or use another number.',
+    };
+}
+```
+
+:::caution[Do not show Safaricom's description to a customer]
+Some of it is fine. Some of it is `DS timeout user cannot be reached`. It is
+written for whoever is debugging the integration, and it changes wording
+without warning, so it belongs in your records rather than on a checkout page.
+
+The same goes for `$response->customerMessage` on the push response, despite
+the name. It says things like "Success. Request accepted for processing",
+which is a sentence about an API call rather than about a payment.
+:::
+
+The package ships no enum for these codes — the full list is in
+[Error codes](../../reference/error-codes/), and a `match` like the one above is
+the whole of what most applications need.
 
 ## Tell the customer what happened
 

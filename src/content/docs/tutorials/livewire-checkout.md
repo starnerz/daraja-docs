@@ -113,9 +113,11 @@ class Checkout extends Component
         // rather than leaving the customer watching a spinner.
         $status = Daraja::stk()->query($attempt->checkout_request_id);
 
-        $attempt->update($status->paid()
-            ? ['state' => 'paid']
-            : ['state' => 'failed', 'failure_reason' => $status->resultDescription]);
+        $attempt->update($status->paid() ? ['state' => 'paid'] : [
+            'state' => 'failed',
+            'failure_code' => $status->resultCode,
+            'failure_reason' => $status->resultDescription,
+        ]);
     }
 
     public function render()
@@ -148,13 +150,19 @@ class Checkout extends Component
     @elseif ($attempt->state === 'paid')
         <p>Payment received. Receipt {{ $attempt->order->payment->receipt }}.</p>
     @else
-        <p>That payment did not go through.</p>
+        <p>{{ $attempt->failureMessage() }}</p>
         <button wire:click="$set('attemptId', null)">Try again</button>
     @endif
 </div>
 ```
 
-Two details in that template do most of the work.
+Three details in that template do most of the work.
+
+**The failure message comes from the attempt.** `failureMessage()` turns the
+stored result code into a sentence — "You cancelled the payment", not `1032`
+and not Safaricom's own wording. It is a `match` on the code, and
+[Accept M-Pesa payments](../stk-push/#three-strings-not-two) has the one this
+page assumes.
 
 **The poll is conditional.** `wire:poll` only renders while the attempt is
 pending, so a finished checkout stops making requests instead of hitting your
@@ -184,7 +192,8 @@ class RecordPayment implements ShouldQueue
         if (! $callback->successful()) {
             $attempt?->update([
                 'state' => 'failed',
-                'failure_reason' => $callback->resultCode,
+                'failure_code' => $callback->resultCode,
+                'failure_reason' => $callback->resultDescription,
             ]);
 
             return;
