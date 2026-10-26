@@ -7,7 +7,7 @@ description: Every release of starnerz/laravel-daraja, and what changed in it.
 
 Every release of [`starnerz/laravel-daraja`](https://packagist.org/packages/starnerz/laravel-daraja).
 
-## [Unreleased]
+## [5.5.0] — 2026-10-26
 
 ### Added
 
@@ -175,6 +175,7 @@ tracked successive Laravel majors over the 1.x codebase.
 Initial releases supporting M-Pesa Express, C2B, B2C, B2B, Account Balance,
 Transaction Status and Reversal on Laravel 5.5+.
 
+[5.5.0]: https://github.com/starnerz/laravel-daraja/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/starnerz/laravel-daraja/compare/v5.3.1...v5.4.0
 [5.3.1]: https://github.com/starnerz/laravel-daraja/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/starnerz/laravel-daraja/compare/v5.2.0...v5.3.0
