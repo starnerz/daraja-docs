@@ -3,6 +3,7 @@
 import EazysoftMark from './marks/EazysoftMark.astro';
 
 const CONTACT = 'hello@eazysoft.africa';
+const TIP = 'https://paystack.shop/pay/laravel-daraja';
 const href = `mailto:${CONTACT}?subject=${encodeURIComponent('Enquiry from laraveldaraja.com')}`;
 ---
 
@@ -16,12 +17,18 @@ const href = `mailto:${CONTACT}?subject=${encodeURIComponent('Enquiry from larav
         <p>
             Laravel Daraja is free and open source, and it stays that way. Eazysoft is the
             software company behind it. If you would rather have your M-Pesa integration, or
-            anything else, built for you, talk to us. Running M-Pesa in production already?
+            anything else, built for you, talk to us. Running M-Pesa in production already?{' '}
             <a href="https://mizani.eazysoft.africa">Mizani</a> is our dashboard for it.
         </p>
-        <p class="more"><a href="https://eazysoft.africa">Visit eazysoft.africa</a></p>
+        <p class="more">
+            <a href="https://eazysoft.africa">Visit eazysoft.africa</a>
+        </p>
     </div>
-    <a class="cta" href={href}>Email {CONTACT}</a>
+    <div class="actions">
+        <a class="cta" href={TIP}>Support development</a>
+        <span class="note">A tip of any amount, by M-Pesa or card</span>
+        <a class="cta cta--quiet" href={href}>Email {CONTACT}</a>
+    </div>
 </section>
 
 <style>
@@ -91,6 +98,34 @@ const href = `mailto:${CONTACT}?subject=${encodeURIComponent('Enquiry from larav
     }
 
     .cta:hover {
+        background: #8fe3ea;
+    }
+
+    .actions {
+        display: grid;
+        justify-items: start;
+        gap: 0.5rem;
+    }
+
+    .actions .cta {
+        justify-self: stretch;
+        justify-content: center;
+    }
+
+    .note {
+        margin-bottom: 0.5rem;
+        font-size: var(--sl-text-sm);
+        color: #c1cbd9;
+    }
+
+    .cta--quiet {
+        color: #ffffff;
+        background: transparent;
+        border: 1px solid #3cc6d2;
+    }
+
+    .cta--quiet:hover {
+        color: #0b1b33;
         background: #8fe3ea;
     }
 
