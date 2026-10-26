@@ -7,6 +7,30 @@ description: Every release of starnerz/laravel-daraja, and what changed in it.
 
 Every release of [`starnerz/laravel-daraja`](https://packagist.org/packages/starnerz/laravel-daraja).
 
+## [Unreleased]
+
+### Added
+
+- **Identity checks.** `Daraja::mobileNumberValidation()` checks a number
+  against an ID, passport or military ID (`MobileIdType`);
+  `Daraja::simSwap()` returns the last SIM swap date; `Daraja::b2cHakikisha()`
+  returns the masked name on a number before a payout. Safaricom enables each
+  per app. Contributed by @LUCASFRANKINC in #10.
+  An error Safaricom returns inside an HTTP 200 (`errorCode` in the body)
+  throws an `ApiRequestException`, as any other API error does.
+- **C2B Hakikisha receiver.** With the package routes on, Safaricom can fetch
+  a token from `daraja/c2b-hakikisha/token` and look up an account name at
+  `daraja/c2b-hakikisha/validation`. Register the lookup with
+  `Daraja::resolveC2BAccountUsing()` and set `DARAJA_C2B_HAKIKISHA_USERNAME`
+  and `_PASSWORD`.
+
+### Changed
+
+- **Redaction reaches nested keys** and now covers identity numbers and
+  Hakikisha names, in the log and on `DarajaRequestSending` /
+  `DarajaResponseReceived`. Phone numbers are unchanged.
+- **`ApiRequestException::requestId`** also reads the gateway's `responseId`.
+
 ## [5.4.0] — 2026-10-16
 
 ### Added

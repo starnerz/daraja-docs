@@ -82,7 +82,7 @@ payout and let the user confirm it.
 $customer = Daraja::b2cHakikisha()->validate('0712345678');
 
 if ($customer->successful()) {
-    $name = trim("{$customer->firstName} {$customer->middleName} {$customer->lastName}");
+    $name = $customer->fullName(); // "Jane M****** K******"
 }
 ```
 
