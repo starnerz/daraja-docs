@@ -35,6 +35,15 @@ const groups = [
             ['Bill Manager', 'apis/bill-manager'],
         ],
     },
+    {
+        name: 'Checking who you deal with',
+        apis: [
+            ['Mobile Number Validation', 'apis/identity#mobile-number-validation'],
+            ['SIM Swap', 'apis/identity#sim-swap'],
+            ['B2C Hakikisha', 'apis/identity#b2c-hakikisha'],
+            ['C2B Hakikisha', 'apis/identity#c2b-hakikisha'],
+        ],
+    },
 ];
 ---
 
@@ -46,7 +55,7 @@ const groups = [
                 <ul>
                     {apis.map(([label, slug]) => (
                         <li>
-                            <a href={`${base}/${slug}/`}>{label}</a>
+                            <a href={`${base}/${slug.replace(/(#|$)/, '/$1')}`}>{label}</a>
                         </li>
                     ))}
                 </ul>
@@ -97,9 +106,15 @@ const groups = [
         color: var(--sl-color-text-accent);
     }
 
-    @media (min-width: 64rem) {
+    @media (min-width: 40rem) {
         .groups {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 72rem) {
+        .groups {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
         }
     }
 </style>

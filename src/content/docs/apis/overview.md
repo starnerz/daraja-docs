@@ -3,7 +3,7 @@ title: API overview
 description: Every supported API and the call that reaches it.
 ---
 
-Seventeen Daraja APIs are supported. Each is reached through the `Daraja`
+Twenty-one Daraja APIs are supported. Each is reached through the `Daraja`
 facade.
 
 ## Payments
@@ -56,9 +56,8 @@ request. Whether money moved is decided later, in the callback.
 
 ## Not supported
 
-**B2B Hakikisha**, **Tax Remittance**, **Mobile Data Bundles**, **IoT SIM Management** and the
-identity APIs (Swap, IMSI, Mobile Number Validation, Age on Network) are out of
-scope for a payments package.
+**B2B Hakikisha**, **Tax Remittance**, **Mobile Data Bundles**, **IoT SIM Management**,
+**IMSI** and **Age on Network** are out of scope for a payments package.
 
 ## Escape hatch
 
@@ -71,3 +70,12 @@ $response = Daraja::client()->post('mpesa/some/new/endpoint', [
 ```
 
 It carries the cached token, base URL, timeouts, retries and error handling.
+
+## Identity checks
+
+| API | Call | Endpoint |
+|---|---|---|
+| [Mobile Number Validation](../identity/#mobile-number-validation) | `Daraja::mobileNumberValidation()->validate()` | `v1/KYC-validation/validateID` |
+| [SIM Swap](../identity/#sim-swap) | `Daraja::simSwap()->query()` | `imsi/v2/checkATI` |
+| [B2C Hakikisha](../identity/#b2c-hakikisha) | `Daraja::b2cHakikisha()->validate()` | `mpesa/b2c/hakikisha/v1/hakikisha` |
+| [C2B Hakikisha](../identity/#c2b-hakikisha) | `Daraja::resolveC2BAccountUsing()` | Safaricom calls your app |

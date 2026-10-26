@@ -18,6 +18,9 @@ description: Every key in config/laravel-daraja.php.
 | `partner_name` | `DARAJA_PARTNER_NAME` | `null` |
 | `pull.nominated_number` | `DARAJA_PULL_NOMINATED_NUMBER` | `null` |
 | `bill_manager.app_key` | `DARAJA_BILL_MANAGER_APP_KEY` | `null` |
+| `c2b_hakikisha.username` | `DARAJA_C2B_HAKIKISHA_USERNAME` | `null` |
+| `c2b_hakikisha.password` | `DARAJA_C2B_HAKIKISHA_PASSWORD` | `null` |
+| `c2b_hakikisha.token_ttl` | `DARAJA_C2B_HAKIKISHA_TOKEN_TTL` | `3599` |
 | `stk.short_code` | `DARAJA_STK_SHORTCODE` | `null` |
 | `stk.pass_key` | `DARAJA_STK_PASS_KEY` | `null` |
 | `stk.callback_url` | `DARAJA_STK_CALLBACK_URL` | `null` |

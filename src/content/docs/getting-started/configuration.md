@@ -52,14 +52,12 @@ DARAJA_STK_CALLBACK_URL=https://your-domain/daraja/stk
 
 ## C2B Hakikisha
 
-C2B Hakikisha is receiver-side: Safaricom calls your app to obtain a token and
-resolve an account name. Enable package routes and configure the partner
-credentials:
+Only if Safaricom has enabled C2B Hakikisha for you. These are the credentials
+Safaricom uses to call your app; see [Identity checks](../../apis/identity/#c2b-hakikisha).
 
 ```dotenv
-DARAJA_ROUTES_ENABLED=true
-DARAJA_C2B_HAKIKISHA_USERNAME=partner-user
-DARAJA_C2B_HAKIKISHA_PASSWORD=change-this-secret
+DARAJA_C2B_HAKIKISHA_USERNAME=
+DARAJA_C2B_HAKIKISHA_PASSWORD=
 DARAJA_C2B_HAKIKISHA_TOKEN_TTL=3599
 ```
 

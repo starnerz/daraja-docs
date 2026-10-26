@@ -180,6 +180,7 @@ export default defineConfig({
                         { label: 'Bill Manager', slug: 'apis/bill-manager' },
                         { label: 'Pull Transactions', slug: 'apis/pull-transactions' },
                         { label: 'Lipa na Bonga', slug: 'apis/lipa-na-bonga' },
+                        { label: 'Identity checks', slug: 'apis/identity' },
                     ],
                 },
                 {
