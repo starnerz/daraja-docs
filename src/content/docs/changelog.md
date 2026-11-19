@@ -7,6 +7,16 @@ description: Every release of starnerz/laravel-daraja, and what changed in it.
 
 Every release of [`starnerz/laravel-daraja`](https://packagist.org/packages/starnerz/laravel-daraja).
 
+## [5.5.1] — 2026-11-19
+
+### Fixed
+
+- **`daraja:register-urls` reported a successful registration as a failure.**
+  Safaricom now answers C2B URL registration with `ResponseCode` `"00000000"`
+  instead of `"0"`, so the command printed "Safaricom rejected the
+  registration: Success." and exited 1. `Acknowledgement::accepted()` now
+  treats any run of zeros as success.
+
 ## [5.5.0] — 2026-10-26
 
 ### Added
@@ -175,6 +185,7 @@ tracked successive Laravel majors over the 1.x codebase.
 Initial releases supporting M-Pesa Express, C2B, B2C, B2B, Account Balance,
 Transaction Status and Reversal on Laravel 5.5+.
 
+[5.5.1]: https://github.com/starnerz/laravel-daraja/compare/v5.5.0...v5.5.1
 [5.5.0]: https://github.com/starnerz/laravel-daraja/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/starnerz/laravel-daraja/compare/v5.3.1...v5.4.0
 [5.3.1]: https://github.com/starnerz/laravel-daraja/compare/v5.3.0...v5.3.1
